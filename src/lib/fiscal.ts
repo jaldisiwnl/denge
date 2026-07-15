@@ -46,6 +46,12 @@ export function getMonthRange(
   return { start: toISO(start), end: toISO(addDays(nextStart, -1)) };
 }
 
+/** "2026-01" + (−1) → "2025-12". For the month navigator in lists/insights. */
+export function shiftMonthKey(monthKey: MonthKey, delta: number): MonthKey {
+  const [y, m] = monthKey.split('-').map(Number);
+  return format(addMonths(new Date(y!, m! - 1, 1), delta), 'yyyy-MM');
+}
+
 /**
  * Days left in the fiscal month, counting today itself (drives "Güne düşen",
  * §8.3). 0 when the month is already over; full length when it hasn't begun.

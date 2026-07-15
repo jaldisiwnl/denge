@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { getDaysRemaining, getMonthKey, getMonthRange } from './fiscal';
+import {
+  getDaysRemaining,
+  getMonthKey,
+  getMonthRange,
+  shiftMonthKey,
+} from './fiscal';
 
 // AC (§16 P1): fiscal month math correct for startDay 1, 15, 28
 // around month boundaries.
@@ -77,6 +82,14 @@ describe('getMonthRange', () => {
       start: '2026-01-31',
       end: '2026-02-27', // next start clamps to Feb 28
     });
+  });
+});
+
+describe('shiftMonthKey', () => {
+  it('shifts across year boundaries in both directions', () => {
+    expect(shiftMonthKey('2026-01', -1)).toBe('2025-12');
+    expect(shiftMonthKey('2025-12', 1)).toBe('2026-01');
+    expect(shiftMonthKey('2026-07', -13)).toBe('2025-06');
   });
 });
 
