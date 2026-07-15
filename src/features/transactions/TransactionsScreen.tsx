@@ -12,6 +12,7 @@ import { parseLocalDate, todayISO, daysAgoISO } from '../../lib/dates';
 import { getSettings } from '../../db/repo/settings';
 import { listAllCategories } from '../../db/repo/categories';
 import { listMonthTransactions } from '../../db/repo/transactions';
+import { CooldownSegment } from '../cooldown/CooldownSegment';
 import type { Category, Necessity, Transaction } from '../../db/types';
 
 const NECESSITY_DOT: Record<Necessity, string> = {
@@ -31,11 +32,15 @@ export function TransactionsScreen() {
   const startDay = settings?.monthStartDay ?? 1;
   const currentKey = getMonthKey(todayISO(), startDay);
 
-  // Dashboard tap-throughs (§9.7): donut slice → category, heatmap → day.
+  // Dashboard tap-throughs (§9.7): donut slice → category, heatmap → day,
+  // cooldown badge → Soğuma segment.
   const navState = useLocation().state as
-    | { categoryId?: string; date?: string }
+    | { categoryId?: string; date?: string; segment?: string }
     | null;
 
+  const [segment, setSegment] = useState<'islemler' | 'soguma'>(
+    navState?.segment === 'soguma' ? 'soguma' : 'islemler',
+  );
   const [monthOverride, setMonthOverride] = useState<string>();
   const [categoryFilter, setCategoryFilter] = useState(
     navState?.categoryId ?? 'all',
@@ -101,6 +106,34 @@ export function TransactionsScreen() {
     <div>
       <h1 className="font-display text-2xl font-semibold">{tr.tabs.islemler}</h1>
 
+      {/* /islemler segments (§10): İşlemler | Soğuma */}
+      <div className="mt-2 flex gap-1 rounded-full border border-grid bg-card p-1">
+        {(
+          [
+            ['islemler', tr.tabs.islemler],
+            ['soguma', tr.cooldown.title],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setSegment(key)}
+            aria-pressed={segment === key}
+            className={`min-h-10 flex-1 rounded-full text-base ${
+              segment === key ? 'bg-ballpoint font-medium text-white' : 'text-ink-soft'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {segment === 'soguma' ? (
+        <div className="mt-4">
+          <CooldownSegment />
+        </div>
+      ) : (
+        <>
       {/* Sticky filter bar (§9.3): fiscal month, category, necessity, search */}
       <div className="sticky top-0 z-10 -mx-4 mt-2 space-y-2 bg-paper px-4 py-2">
         <div className="flex items-center justify-between">
@@ -195,6 +228,8 @@ export function TransactionsScreen() {
           />
         ))}
       </div>
+        </>
+      )}
     </div>
   );
 }
