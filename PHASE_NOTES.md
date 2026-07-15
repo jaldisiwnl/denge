@@ -247,5 +247,15 @@ Kullanıcı + finansçı şapkalı gözden geçirme sonrası:
 
 ---
 
+## P7 gözden geçirme düzeltmeleri (2026-07-15)
+Mühendis + kullanıcı şapkalı son tur:
+- **Demo temizliği sızıntısı kapatıldı:** demo kuralları yüklüyken vadesi gelen abonelik/maaş gerçek uuid ile yazılıyor ve `demo-` filtresinden kaçıyordu — temizlik artık demo kurallarından türeyen işlemleri de siler (kullanıcının bilerek girdiği kayıtlar, ör. demo kısayoluna dokunuşlar, korunur).
+- **İçe aktarım `lastPostedDate`i asla geri sarmaz:** eski yedek, kuralın yazım imlecini geriye çekip motorun arayı **mükerrer** yazmasına yol açabilirdi — birleştirmede en yeni imleç kazanır.
+- **Sheet odak çalması giderildi:** odak yalnız mount'ta içeri alınır; ebeveyn render'ları (canlı sorgu güncellemeleri) yazma/dokunma sırasında odağı artık kaçırmaz.
+- **Demo yükle/temizle çift-dokunuş yarışına karşı kilitli** (meşgulken pasif).
+- **CSV BOM'u açık `\uFEFF` kaçışı** — kaynaktaki görünmez karakter araç zincirinde kaybolmaya fazla açıktı.
+
+---
+
 # 🏁 v1.1 spec'inin tüm fazları (P0–P7) tamamlandı.
 Parking lot (v2, §19) dışında açık iş yok. İyi birikimler! 🏦
