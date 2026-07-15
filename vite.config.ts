@@ -9,6 +9,18 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.test.ts'],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Split the heavyweights so no chunk crosses ~500 KB and vendor
+        // code caches independently of app code (P7).
+        manualChunks: {
+          recharts: ['recharts'],
+          vendor: ['react', 'react-dom', 'react-router-dom', 'dexie', 'date-fns', 'zustand'],
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     VitePWA({

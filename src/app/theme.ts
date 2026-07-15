@@ -35,9 +35,15 @@ function resolve(theme: ThemePreference): 'light' | 'dark' {
  *  sync with OS changes while preference is 'system'. Call once at startup. */
 export function initTheme(): void {
   const apply = () => {
-    document.documentElement.dataset.theme = resolve(
-      useUiStore.getState().theme,
-    );
+    const resolved = resolve(useUiStore.getState().theme);
+    document.documentElement.dataset.theme = resolved;
+    // Browser chrome follows the app theme even when it overrides the OS
+    // scheme (§13: theme-color = --paper per scheme).
+    document
+      .querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')
+      .forEach((meta) => {
+        meta.content = resolved === 'dark' ? '#0F1524' : '#FAF9F4';
+      });
   };
 
   apply();
