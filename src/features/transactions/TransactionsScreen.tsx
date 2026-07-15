@@ -107,7 +107,11 @@ export function TransactionsScreen() {
           <button
             type="button"
             aria-label={tr.list.prevMonth}
-            onClick={() => setMonthOverride(shiftMonthKey(monthKey, -1))}
+            onClick={() => {
+              // A single-day filter would empty any other month — drop it.
+              setDateFilter(undefined);
+              setMonthOverride(shiftMonthKey(monthKey, -1));
+            }}
             className="flex h-11 w-11 items-center justify-center rounded-full text-ink-soft"
           >
             ‹
@@ -116,7 +120,10 @@ export function TransactionsScreen() {
           <button
             type="button"
             aria-label={tr.list.nextMonth}
-            onClick={() => setMonthOverride(shiftMonthKey(monthKey, 1))}
+            onClick={() => {
+              setDateFilter(undefined);
+              setMonthOverride(shiftMonthKey(monthKey, 1));
+            }}
             className="flex h-11 w-11 items-center justify-center rounded-full text-ink-soft"
           >
             ›
