@@ -1,10 +1,21 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { Sheet } from '../../components/Sheet';
 import { tr } from '../../i18n/tr';
+import { ti } from '../../i18n/interpolate';
 import { useUiStore, type ThemePreference } from '../../app/theme';
 import { useEphemeralStore } from '../../app/ui';
 import { getSettings, updateSettings } from '../../db/repo/settings';
+import {
+  applyImport,
+  downloadCsvExport,
+  downloadJsonBackup,
+  parseBackup,
+  planImport,
+  type ImportPlan,
+} from '../../db/repo/backup';
+import { clearDemoData, hasDemoData, loadDemoData } from '../../db/demo';
 import { formatMinor, minorToInput, parseAmountMinor } from '../../lib/money';
 
 const themeOptions: { value: ThemePreference; label: string }[] = [
@@ -21,6 +32,9 @@ export function SettingsScreen() {
 
   const [income, setIncome] = useState<string>();
   const [incomeError, setIncomeError] = useState(false);
+  const [importPlan, setImportPlan] = useState<ImportPlan | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const demoLoaded = useLiveQuery(hasDemoData);
 
   if (!settings) return null;
 
@@ -55,8 +69,32 @@ export function SettingsScreen() {
     );
   }
 
+  async function onImportFile(file: File) {
+    try {
+      const backup = parseBackup(await file.text());
+      setImportPlan(await planImport(backup));
+    } catch {
+      showToast(tr.settings.importInvalid);
+    }
+    if (fileRef.current) fileRef.current.value = '';
+  }
+
+  async function confirmImport() {
+    if (!importPlan) return;
+    await applyImport(importPlan);
+    showToast(
+      ti(tr.settings.importDone, {
+        added: String(importPlan.addedCount),
+        updated: String(importPlan.updatedCount),
+      }),
+    );
+    setImportPlan(null);
+  }
+
   const fieldCls =
     'mt-1 w-full rounded-card border border-grid bg-card px-3 py-2.5 text-base outline-none';
+  const rowBtnCls =
+    'flex min-h-11 w-full items-center justify-between px-4 py-3 text-left text-base';
 
   return (
     <div className="space-y-4">
@@ -120,6 +158,25 @@ export function SettingsScreen() {
             {tr.recurring.weekdaysShort.map((label, i) => (
               <option key={label} value={i + 1}>
                 {label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="mt-3 block text-base font-medium">
+          {tr.settings.savingsTargetRate}
+          <select
+            value={Math.round((settings.savingsTargetRate ?? 0.2) * 100)}
+            onChange={(e) =>
+              void updateSettings({
+                savingsTargetRate: Number(e.target.value) / 100,
+              })
+            }
+            className={`${fieldCls} min-h-11 font-mono`}
+          >
+            {[5, 10, 15, 20, 25, 30, 40, 50].map((p) => (
+              <option key={p} value={p}>
+                %{p}
               </option>
             ))}
           </select>
@@ -202,6 +259,97 @@ export function SettingsScreen() {
           </span>
         </Link>
       </section>
+
+      {/* Yedekleme (§14) */}
+      <section className="rounded-card border border-grid bg-card">
+        <h2 className="px-4 pt-3 text-xs font-medium uppercase tracking-wide text-ink-soft">
+          {tr.settings.backupSection}
+        </h2>
+        <div className="divide-y divide-grid">
+          <button type="button" onClick={() => void downloadJsonBackup()} className={rowBtnCls}>
+            {tr.settings.exportJson}
+            <span className="text-ink-soft" aria-hidden>↓</span>
+          </button>
+          <button type="button" onClick={() => void downloadCsvExport()} className={rowBtnCls}>
+            {tr.settings.exportCsv}
+            <span className="text-ink-soft" aria-hidden>↓</span>
+          </button>
+          <button type="button" onClick={() => fileRef.current?.click()} className={rowBtnCls}>
+            {tr.settings.importJson}
+            <span className="text-ink-soft" aria-hidden>↑</span>
+          </button>
+        </div>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) void onImportFile(file);
+          }}
+        />
+      </section>
+
+      {/* Demo verisi (§18) */}
+      <section className="rounded-card border border-grid bg-card">
+        <h2 className="px-4 pt-3 text-xs font-medium uppercase tracking-wide text-ink-soft">
+          {tr.settings.demoSection}
+        </h2>
+        <p className="px-4 pt-1 text-xs text-ink-soft">{tr.settings.demoHint}</p>
+        <div className="divide-y divide-grid">
+          <button
+            type="button"
+            onClick={() => void loadDemoData().then(() => showToast(tr.settings.demoLoaded))}
+            className={rowBtnCls}
+          >
+            {tr.settings.demoLoad}
+          </button>
+          {demoLoaded && (
+            <button
+              type="button"
+              onClick={() => void clearDemoData().then(() => showToast(tr.settings.demoCleared))}
+              className={`${rowBtnCls} text-redpen`}
+            >
+              {tr.settings.demoClear}
+            </button>
+          )}
+        </div>
+      </section>
+
+      <p className="pb-2 text-center text-xs text-ink-soft">
+        {tr.settings.aboutLine}
+      </p>
+
+      {/* Import diff confirmation (§14) */}
+      {importPlan && (
+        <Sheet onClose={() => setImportPlan(null)}>
+          <h2 className="text-md font-semibold">{tr.settings.importTitle}</h2>
+          <p className="mt-3 text-base">
+            {ti(tr.settings.importSummary, {
+              added: String(importPlan.addedCount),
+              updated: String(importPlan.updatedCount),
+            })}
+          </p>
+          {importPlan.migratedFromV1 && (
+            <p className="mt-1 text-xs text-ink-soft">{tr.settings.importMigrated}</p>
+          )}
+          <button
+            type="button"
+            onClick={() => void downloadJsonBackup()}
+            className="mt-4 min-h-11 w-full rounded-full border border-ink text-base font-medium text-ink"
+          >
+            {tr.settings.importBackupFirst}
+          </button>
+          <button
+            type="button"
+            onClick={() => void confirmImport()}
+            className="mt-2 min-h-12 w-full rounded-full bg-ballpoint text-md font-medium text-white"
+          >
+            {tr.settings.importConfirm}
+          </button>
+        </Sheet>
+      )}
     </div>
   );
 }
