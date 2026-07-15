@@ -41,6 +41,20 @@
   }
 }
 
+/* RedPen draw-in (§11.5): once per mount, 400ms ease-out; the global
+   reduced-motion rule below collapses it to a static mark. */
+@keyframes redpen-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.redpen-draw {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: redpen-draw 400ms ease-out forwards;
+}
+
 /* Sheets slide up 240ms (§11.6); killed globally by reduced-motion below. */
 @keyframes sheet-up {
   from {

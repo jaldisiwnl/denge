@@ -4,9 +4,10 @@ import { format } from 'date-fns';
 import { tr as trLocale } from 'date-fns/locale';
 import { tr } from '../../i18n/tr';
 import { useEphemeralStore } from '../../app/ui';
+import { RedPen } from '../../components/RedPen';
 import { formatMinor } from '../../lib/money';
 import { getMonthKey, shiftMonthKey } from '../../lib/fiscal';
-import { todayISO, daysAgoISO } from '../../lib/dates';
+import { parseLocalDate, todayISO, daysAgoISO } from '../../lib/dates';
 import { getSettings } from '../../db/repo/settings';
 import { listAllCategories } from '../../db/repo/categories';
 import { listMonthTransactions } from '../../db/repo/transactions';
@@ -18,15 +19,10 @@ const NECESSITY_DOT: Record<Necessity, string> = {
   bos: 'bg-redpen',
 };
 
-function parseLocalDay(date: string): Date {
-  const [y, m, d] = date.split('-').map(Number);
-  return new Date(y!, m! - 1, d!);
-}
-
 function dayHeader(date: string): string {
   if (date === todayISO()) return tr.list.today;
   if (date === daysAgoISO(1)) return tr.list.yesterday;
-  return format(parseLocalDay(date), 'd MMMM EEEE', { locale: trLocale });
+  return format(parseLocalDate(date), 'd MMMM EEEE', { locale: trLocale });
 }
 
 export function TransactionsScreen() {
@@ -79,7 +75,7 @@ export function TransactionsScreen() {
     return [...map.entries()];
   }, [filtered]);
 
-  const monthLabel = format(parseLocalDay(`${monthKey}-01`), 'LLLL yyyy', {
+  const monthLabel = format(parseLocalDate(`${monthKey}-01`), 'LLLL yyyy', {
     locale: trLocale,
   });
   const hasAnyThisMonth = (transactions?.length ?? 0) > 0;
@@ -233,15 +229,23 @@ function TransactionRow(props: {
           <span className="block truncate text-xs text-ink-soft">{t.note}</span>
         )}
       </span>
-      {/* pisman amounts get a strike (simple decoration until <RedPen> in P4, §11.5) */}
-      <span
-        className={`font-mono text-base ${
-          t.type === 'income' ? 'text-green' : 'text-ink'
-        } ${t.regret === 'pisman' ? 'line-through decoration-redpen decoration-2' : ''}`}
-      >
-        {t.type === 'income' ? '+' : ''}
-        {formatMinor(t.amountMinor)}
-      </span>
+      {/* pisman amounts get the hand-drawn strike (§11.5) */}
+      {t.regret === 'pisman' ? (
+        <RedPen variant="strike">
+          <span className="font-mono text-base text-ink">
+            {formatMinor(t.amountMinor)}
+          </span>
+        </RedPen>
+      ) : (
+        <span
+          className={`font-mono text-base ${
+            t.type === 'income' ? 'text-green' : 'text-ink'
+          }`}
+        >
+          {t.type === 'income' ? '+' : ''}
+          {formatMinor(t.amountMinor)}
+        </span>
+      )}
     </button>
   );
 }
