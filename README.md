@@ -2,6 +2,10 @@
 
 > **Paranla aranı düzelt.** Yerel, hesapsız, çevrimdışı — senin defterin.
 
+**Canlı:** https://jaldisiwnl.github.io/denge/ — telefonda aç, "Ana ekrana
+ekle" de; ilk yüklemeden sonra tamamen çevrimdışı çalışır. Barındırma yalnız
+statik dosyaları servis eder; **verilerin hiçbir zaman cihazından çıkmaz.**
+
 Denge; her harcamaya bir **bilinç etiketi** (Gerekli / İstek / Boş) iliştiren,
 pazar günleri *"Buna değdi mi?"* diye soran, vazgeçtiklerini **Kumbara**'ya
 taşıyan, tek kullanıcılık bir kişisel bütçe PWA'sıdır. Veri asla cihazdan
@@ -17,8 +21,13 @@ npm run build      # tsc -b + vite build (PWA service worker dahil)
 npm run preview    # üretim build'ini yerelde servis eder
 ```
 
-Telefona kurulum: `npm run build && npm run preview` sonrası tarayıcıdan
-"Ana ekrana ekle". İlk yüklemeden sonra tamamen çevrimdışı çalışır.
+## Yayınlama
+
+`master`a atılan her push, GitHub Actions ile testleri koşturur, `/denge/`
+base'iyle derler ve GitHub Pages'e yayınlar
+([deploy.yml](.github/workflows/deploy.yml)). Yerelde alt dizinli build'i
+denemek için: `DEPLOY_BASE=/denge/ npm run build`. Derin bağlantılar Pages'te
+`404.html` SPA fallback'iyle çalışır.
 
 ## Mimari harita
 
