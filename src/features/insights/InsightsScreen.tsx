@@ -81,7 +81,9 @@ export function InsightsScreen() {
     data.weekday ||
     data.champions.length > 0 ||
     data.merchants.length > 0 ||
-    data.deltas.length > 0;
+    data.deltas.length > 0 ||
+    data.bosTrend.some((m) => m.bosRate !== null && m.bosRate > 0) ||
+    data.closes.length > 0;
 
   return (
     <div className="space-y-4">
