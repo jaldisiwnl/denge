@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { tr } from '../../i18n/tr';
 import { HeroCard } from './HeroCard';
+import { WeeklyCard } from './WeeklyCard';
 import { StreakCard } from './StreakCard';
 import { DonutCard } from './DonutCard';
 import { TrendCard } from './TrendCard';
@@ -12,16 +13,18 @@ import { ReviewBadgeCard } from '../review/ReviewBadgeCard';
 import { CooldownBadgeCard } from '../cooldown/CooldownBadgeCard';
 import { CloseCard } from '../close/CloseCard';
 
-// Card order per §9.7.
+// Card order per §9.7; desktop lays the same cards on a grid.
+const WIDE = 'lg:col-span-2 xl:col-span-3';
+
 export function DashboardScreen() {
   return (
-    <div className="space-y-4">
+    <div>
       <header className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-semibold">{tr.tabs.ozet}</h1>
         <Link
           to="/ayarlar"
           aria-label={tr.common.settings}
-          className="flex h-11 w-11 items-center justify-center rounded-full text-ink-soft"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-ink-soft lg:hidden"
         >
           <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <circle cx="12" cy="12" r="3" />
@@ -30,18 +33,21 @@ export function DashboardScreen() {
         </Link>
       </header>
 
-      <HeroCard />
-      {/* Pending cards (§9.7.2): lapse first, then review, cooldowns, fixed */}
-      <LapseCard />
-      <ReviewBadgeCard />
-      <CooldownBadgeCard />
-      <PendingRecurringCards />
-      <CloseCard />
-      <KumbaraCard />
-      <StreakCard />
-      <DonutCard />
-      <TrendCard />
-      <HeatmapCard />
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start xl:grid-cols-3">
+        <HeroCard className={WIDE} />
+        {/* Pending cards (§9.7.2): lapse first, then review, cooldowns, fixed */}
+        <LapseCard className={WIDE} />
+        <ReviewBadgeCard className={WIDE} />
+        <CooldownBadgeCard className={WIDE} />
+        <PendingRecurringCards className={WIDE} />
+        <CloseCard className={WIDE} />
+        <WeeklyCard />
+        <KumbaraCard />
+        <StreakCard />
+        <DonutCard />
+        <TrendCard />
+        <HeatmapCard />
+      </div>
     </div>
   );
 }

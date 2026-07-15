@@ -9,7 +9,7 @@ import { parseLocalDate, todayISO } from '../../lib/dates';
 import { getHeroData } from '../../db/repo/dashboard';
 
 /** Dashboard hero (§9.7.1): Kalan, Güne düşen, pace bar, grid texture. */
-export function HeroCard() {
+export function HeroCard(props: { className?: string }) {
   const hero = useLiveQuery(() => getHeroData(todayISO()));
   if (!hero) return null;
 
@@ -25,7 +25,9 @@ export function HeroCard() {
     hero.monthLength > 0 ? hero.elapsedDays / hero.monthLength : 0;
 
   return (
-    <section className="paper-grid rounded-card border border-grid bg-card p-4">
+    <section
+      className={`paper-grid rounded-card border border-grid bg-card p-4 ${props.className ?? ''}`}
+    >
       <div className="flex items-baseline justify-between">
         <span className="font-display text-md font-semibold">{monthLabel}</span>
         <span className="text-xs text-ink-soft">{tr.dashboard.kalan}</span>

@@ -7,7 +7,7 @@ import { todayISO } from '../../lib/dates';
 import { getDonutData } from '../../db/repo/dashboard';
 
 /** Kategori dağılımı (§9.7.5): top 6 + Diğer; tap slice → filtered list. */
-export function DonutCard() {
+export function DonutCard(props: { className?: string }) {
   const navigate = useNavigate();
   const data = useLiveQuery(() => getDonutData(todayISO(), tr.dashboard.donutOther));
   if (!data || data.totalMinor === 0) return null;
@@ -16,7 +16,7 @@ export function DonutCard() {
 
   return (
     <section
-      className="rounded-card border border-grid bg-card p-4"
+      className={`rounded-card border border-grid bg-card p-4 ${props.className ?? ''}`}
       aria-label={tr.dashboard.donutTitle}
     >
       <h2 className="text-xs font-medium uppercase tracking-wide text-ink-soft">

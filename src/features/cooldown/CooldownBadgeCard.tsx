@@ -5,7 +5,7 @@ import { ti } from '../../i18n/interpolate';
 import { expiresAtMs, listWishlist } from '../../db/repo/wishlist';
 
 /** Expired cooldowns badge (§9.7.2) → Soğuma segment. */
-export function CooldownBadgeCard() {
+export function CooldownBadgeCard(props: { className?: string }) {
   const navigate = useNavigate();
   const count = useLiveQuery(async () => {
     const items = await listWishlist();
@@ -19,7 +19,7 @@ export function CooldownBadgeCard() {
     <button
       type="button"
       onClick={() => navigate('/islemler', { state: { segment: 'soguma' } })}
-      className="w-full rounded-card border border-grid bg-card p-4 text-left"
+      className={`w-full rounded-card border border-grid bg-card p-4 text-left ${props.className ?? ''}`}
     >
       <p className="text-base text-ink">
         ⏳ {ti(tr.cooldown.badge, { count: String(count) })}

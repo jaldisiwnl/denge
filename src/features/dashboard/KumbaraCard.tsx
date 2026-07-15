@@ -16,7 +16,7 @@ import {
  * Dashboard Kumbara card (§9.7.3): hidden until the first SavingsEntry —
  * before that a slim "Kumbarayı başlat" CTA. Tap → /butce Kumbara segment.
  */
-export function KumbaraCard() {
+export function KumbaraCard(props: { className?: string }) {
   const navigate = useNavigate();
 
   const data = useLiveQuery(async () => {
@@ -41,7 +41,7 @@ export function KumbaraCard() {
       <button
         type="button"
         onClick={goKumbara}
-        className="w-full rounded-card border border-dashed border-grid bg-card px-4 py-3 text-left text-base text-ink-soft"
+        className={`w-full rounded-card border border-dashed border-grid bg-card px-4 py-3 text-left text-base text-ink-soft ${props.className ?? ''}`}
       >
         🏦 {tr.kumbara.startCta}
       </button>
@@ -62,7 +62,7 @@ export function KumbaraCard() {
     <button
       type="button"
       onClick={goKumbara}
-      className="w-full rounded-card border border-grid bg-card p-4 text-left"
+      className={`w-full rounded-card border border-grid bg-card p-4 text-left ${props.className ?? ''}`}
     >
       <div className="flex items-end justify-between gap-3">
         <div>

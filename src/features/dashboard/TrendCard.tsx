@@ -8,7 +8,7 @@ import { parseLocalDate, todayISO } from '../../lib/dates';
 import { getTrendData } from '../../db/repo/dashboard';
 
 /** 6 aylık eğilim (§9.7.6): total bars with the boş share stacked in red. */
-export function TrendCard() {
+export function TrendCard(props: { className?: string }) {
   const months = useLiveQuery(() => getTrendData(todayISO()));
   if (!months || months.every((m) => m.totalMinor === 0)) return null;
 
@@ -22,7 +22,7 @@ export function TrendCard() {
 
   return (
     <section
-      className="rounded-card border border-grid bg-card p-4"
+      className={`rounded-card border border-grid bg-card p-4 ${props.className ?? ''}`}
       aria-label={tr.dashboard.trendTitle}
     >
       <div className="flex items-baseline justify-between">

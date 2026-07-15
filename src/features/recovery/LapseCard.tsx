@@ -11,7 +11,7 @@ import { BackfillStepper } from './BackfillStepper';
  * Boşluk affı card (§9.15): warm, guilt-free, always above other pending
  * cards. No red anywhere here — a door, not a wall (P2, §11.5).
  */
-export function LapseCard() {
+export function LapseCard(props: { className?: string }) {
   const openQuickAdd = useEphemeralStore((s) => s.openQuickAdd);
   const [filling, setFilling] = useState(false);
   const state = useLiveQuery(() => getLapseState(todayISO()));
@@ -25,7 +25,9 @@ export function LapseCard() {
   }
 
   return (
-    <section className="rounded-card border border-grid bg-card p-4">
+    <section
+      className={`rounded-card border border-grid bg-card p-4 ${props.className ?? ''}`}
+    >
       <p className="text-base text-ink">
         {ti(tr.recovery.lapseTitle, { days: String(gap.dayCount) })}
       </p>

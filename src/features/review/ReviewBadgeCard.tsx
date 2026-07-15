@@ -10,7 +10,7 @@ import { ReviewFlow } from './ReviewFlow';
 import type { Transaction } from '../../db/types';
 
 /** Dashboard badge (§9.8): shows while the review window has open items. */
-export function ReviewBadgeCard() {
+export function ReviewBadgeCard(props: { className?: string }) {
   // The flow gets a FROZEN snapshot: answering removes items from the live
   // query, which would otherwise shift the stepper and unmount the flow
   // before its summary screen (P5/P6 review fix).
@@ -27,7 +27,9 @@ export function ReviewBadgeCard() {
   return (
     <>
       {items && items.length > 0 && (
-        <section className="rounded-card border border-grid bg-card p-4">
+        <section
+          className={`rounded-card border border-grid bg-card p-4 ${props.className ?? ''}`}
+        >
           <p className="text-base text-ink">
             {ti(tr.review.badge, { count: String(items.length) })}
           </p>

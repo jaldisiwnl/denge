@@ -9,7 +9,7 @@ import { getLapseState } from '../../db/repo/lapse';
 import { hasFlag, setFlag } from '../../db/repo/uiFlags';
 
 /** Streak card with pause state (§9.7.4) + milestone toast (§8.5). */
-export function StreakCard() {
+export function StreakCard(props: { className?: string }) {
   const showToast = useEphemeralStore((s) => s.showToast);
   const state = useLiveQuery(() => getLapseState(todayISO()));
 
@@ -39,7 +39,7 @@ export function StreakCard() {
     <section
       className={`rounded-card border border-grid p-4 ${
         milestone && !paused ? 'toast-highlight' : 'bg-card'
-      }`}
+      } ${props.className ?? ''}`}
     >
       {paused ? (
         <p className="text-base text-ink">{tr.dashboard.streakPaused}</p>

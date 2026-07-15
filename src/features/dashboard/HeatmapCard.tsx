@@ -25,7 +25,7 @@ function intensity(spent: number, max: number): number {
 const OPACITY = [0, 0.2, 0.45, 0.7, 1] as const;
 
 /** Harcama takvimi (§9.7.7) — custom SVG heatmap of the fiscal month. */
-export function HeatmapCard() {
+export function HeatmapCard(props: { className?: string }) {
   const navigate = useNavigate();
   const data = useLiveQuery(() => getHeatmapData(todayISO()));
   if (!data || data.days.length === 0) return null;
@@ -45,7 +45,7 @@ export function HeatmapCard() {
 
   return (
     <section
-      className="rounded-card border border-grid bg-card p-4"
+      className={`rounded-card border border-grid bg-card p-4 ${props.className ?? ''}`}
       aria-label={tr.dashboard.heatmapTitle}
     >
       <h2 className="text-xs font-medium uppercase tracking-wide text-ink-soft">

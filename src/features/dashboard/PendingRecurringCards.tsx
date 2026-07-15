@@ -11,12 +11,12 @@ import {
 } from '../../db/repo/recurring';
 
 /** Non-auto rules awaiting confirmation — `Onayla | Bu ay atla` (§9.6). */
-export function PendingRecurringCards() {
+export function PendingRecurringCards(props: { className?: string }) {
   const pending = useLiveQuery(() => listPendingConfirmations(todayISO()));
   if (!pending?.length) return null;
 
   return (
-    <section className="space-y-2">
+    <section className={`space-y-2 ${props.className ?? ''}`}>
       <h2 className="text-xs font-medium uppercase tracking-wide text-ink-soft">
         {tr.recurring.pendingTitle}
       </h2>

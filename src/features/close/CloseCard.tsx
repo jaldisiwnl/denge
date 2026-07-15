@@ -8,7 +8,7 @@ import { closableMonth } from '../../db/repo/close';
 import { CloseWizard, monthLabel } from './CloseWizard';
 
 /** "Ayı kapat" dashboard card (§9.12). */
-export function CloseCard() {
+export function CloseCard(props: { className?: string }) {
   const [open, setOpen] = useState(false);
   const monthKey = useLiveQuery(async () => {
     const settings = await getSettings();
@@ -18,7 +18,9 @@ export function CloseCard() {
   if (!monthKey) return null;
 
   return (
-    <section className="rounded-card border border-grid bg-card p-4">
+    <section
+      className={`rounded-card border border-grid bg-card p-4 ${props.className ?? ''}`}
+    >
       <p className="text-base text-ink">
         📕 {ti(tr.close.cardLine, { month: monthLabel(monthKey) })}
       </p>
