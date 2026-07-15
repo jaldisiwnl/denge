@@ -86,4 +86,34 @@ Onay öncesi mühendis/finansçı/değerlendirmeci gözden geçirmesinde bulunan
 2. **Kısayol:** bir işleme dokun → "Kısayol yap" → FAB'ı tekrar aç: çip en üstte. Çipe dokun → sheet kapanıp anında kayıt + toast (1 dokunuş). Uzun bas → form dolu gelmeli. Ayarlar → Kısayollar'dan sırala/düzenle/sil.
 3. **Dürüstlük kuralı:** bir gider ekle (İstek), sonra detayından etiketi Boş yap → DevTools'ta o kaydın `necessityOriginal: "istek"` kalmalı, `necessityRevisedAt` dolmalı. Filtrelerde Boş'u seç, arama kutusuna not/mekân yaz — liste daralmalı; ay okuyla önceki aya git — boş durum metni gelmeli.
 
-**DURDUM — P3 (Budgets & recurring) için onayını bekliyorum.**
+**DURDUM — P3 (Budgets & recurring) için onayını bekliyorum.** ✅ Onaylandı.
+
+---
+
+## P3 — Budgets & recurring (2026-07-15)
+
+### Ne yapıldı
+- **Zarflar (§9.5):** kategori başına aylık zarf + "Bu aya özel" override + devir; kart başına ilerleme çubuğu (aşımda kırmızı), kalan/aşılan satırı, `+₺X devir` çipi; başlıkta toplam bütçe / harcanan / Güne düşen. Zarf yokken "Zarfları hazırla" — son 3 ayın medyanından toplu öneri. Düzenleme sheet'inde medyan öneri çipi.
+- **Sabitler (§9.6):** kural listesi (sıradaki tarih hesaplı), Abonelikler alt bölümü aylık toplam + **Yıllık Şok** satırı + satır başına yıllık maliyet; kural sheet'i (aylık/haftalık/yıllık kadans kontrolleri, abonelik/otomatik yaz/aktif anahtarları, varsayılan bilinç etiketi).
+- **Yineleme motoru (§8.7):** saf `dueDates` penceresi `(lastPostedDate, bugün]` — idempotentlik yapıdan geliyor; 29–31 ay sonuna kenetlenir (artık yıl Şubat'ı testli). Açılışta + pencere odağında `postDueRecurring` tek Dexie transaction'ında yazar. Otomatik olmayan kurallar dashboard'da **Bekleyen sabitler** kartı: `Onayla | Bu ay atla` (oluşum oluşum ilerler).
+- **Canlı zarf satırı (§9.1.4):** quick-add'de kategori seçilince `"Yemek zarfında ₺180 kaldı"`; yazılan rakamla birlikte anlık güncellenir, aşım durumunda kırmızı `"Bu harcamayla zarf ₺45 aşılır"`. Bilgilendirir, asla engellemez.
+- **Kırmızı Kalem (§11.5):** elle çizilmiş `<RedPen>` bileşeni (circle/strike), 400ms draw-in, reduced-motion'da statik. Aşılan zarf toplamında circle; listedeki pişman tutarlarında P2'deki düz çizginin yerine strike.
+- 39 test yeşil (recurrence 10, budget 5 yeni), build temiz.
+
+### Teknik kararlar (ve nedenleri)
+1. **`lastPostedDate` kural oluşturulurken "dün" olarak tohumlanıyor.** §7'de kuralın `createdAt`i yok; pencere alt sınırı hep tanımlı olsun ve bugün vadesi gelen kural hemen yazılsın ama geçmişe dönük doldurma asla olmasın diye. Motor böylece spec'teki `(lastPostedDate, today]` sözleşmesine hiç istisnasız uyuyor.
+2. **Devir bir seviye derin:** bu ayın devri = geçen ayın *taban* zarfı (override ?? varsayılan) − harcaması, negatifse 0. Zincirleme (devrin devri) bilerek yok — uzun boşluklarda şişen gerçekdışı zarfları önlüyor. (§0.7 en yalın yorum; kodda belgeli.)
+3. **Bekleyen onaylar oluşum-bazlı ilerliyor:** kaçırılmış 3 ay varsa kartlar en eskiden başlayarak tek tek gelir; Onayla/Atla her seferinde `lastPostedDate`i bir oluşum ilerletir. Tek "hepsini onayla" düğmesinden daha fazla dokunuş ama her kayıt bilinçli — uygulamanın ruhuna uygun.
+4. **Zarf önerisi sıfır harcamalı ayları yok sayan medyan** — 1 aylık geçmişte [X,0,0] medyanının 0 çıkıp öneriyi işe yaramaz kılmasını önlüyor (testli).
+
+### Belirsizlik notları (§0.7)
+- Otomatik yazılan işlemde kural adı `merchant` alanına yazılıyor (listede "Spotify" okunaklı dursun diye).
+- Canlı zarf satırı yalnızca yeni kayıt kipinde (düzenlemede işlemin kendisi harcanmışın içinde olduğundan kalan hesabı yanıltıcı olurdu).
+- Kumbara segmenti P5'te eklenecek; şimdilik Bütçe'de iki segment var.
+
+### Elle doğrulama (tarayıcıda)
+1. **Zarf + canlı satır:** Bütçe → Zarflar → bir kategoriye zarf koy (örn. Yemek ₺2.000). FAB'ı aç, o kategoriyi seç → altta "zarfında ₺X kaldı" görünmeli; zarfı aşan bir tutar yaz → satır kırmızıya dönüp "aşılır" demeli. Kaydet; Bütçe'de ilerleme çubuğu dolmalı. Zarfı aşarsan toplamın etrafında kırmızı kalem halkası çizilmeli.
+2. **İdempotent otomatik kayıt:** Sabitler'den bugün günlü aylık bir kural ekle (Otomatik yaz açık) → kaydedince işlem listesinde belirmeli. Sayfayı 2–3 kez yenile, sekmeden çıkıp geri gel → **kopya oluşmamalı**. DevTools'ta kuralın `lastPostedDate`i bugün olmalı.
+3. **Bekleyen onay:** "Otomatik yaz" kapalı bir kural ekle (günü bugün ya da geçmiş) → Özet'te "Bekleyen sabitler" kartı çıkmalı. Onayla → işlem yazılır, kart kaybolur (ya da sıradaki oluşum gelir). "Bu ay atla" → işlem yazılmadan kart kapanır.
+
+**DURDUM — P4 (Dashboard & recovery) için onayını bekliyorum.**
