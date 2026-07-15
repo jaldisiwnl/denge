@@ -26,22 +26,38 @@ export function formatCompactMinor(minor: Minor): string {
   const lira = minor / 100;
   const sign = lira < 0 ? '-' : '';
   const abs = Math.abs(lira);
-  if (abs >= 1_000_000) return `${sign}₺${oneDecimalFmt.format(abs / 1_000_000)} Mn`;
-  if (abs >= 1_000) return `${sign}₺${oneDecimalFmt.format(abs / 1_000)} B`;
+  const round1 = (n: number) => Math.round(n * 10) / 10;
+  // Tier is chosen on the value as it would be *displayed* (rounded), so
+  // ₺999.950 renders as "₺1 Mn" — never as the absurd "₺1.000 B".
+  if (round1(abs / 1_000) >= 1_000) {
+    return `${sign}₺${oneDecimalFmt.format(abs / 1_000_000)} Mn`;
+  }
+  if (Math.round(abs) >= 1_000) {
+    return `${sign}₺${oneDecimalFmt.format(abs / 1_000)} B`;
+  }
   return `${sign}₺${wholeFmt.format(abs)}`;
 }
 
 /**
- * Parses Turkish-convention amount input (§17): dot = thousands separator,
- * comma = decimal separator. "1.250,75" → 125075. Returns null when the
- * input is not a valid non-negative amount with at most 2 decimals.
+ * Parses Turkish-convention amount input (§17): comma = decimal separator,
+ * dot accepted ONLY as proper 3-digit thousands grouping ("1.250.000,75").
+ * Anything else ("1.5", "1.25") is ambiguous between decimal-dot habits and
+ * tr grouping — reject instead of silently guessing ×10 wrong. Returns null
+ * for any input that is not a valid non-negative amount with ≤2 decimals.
  */
 export function parseAmountMinor(input: string): Minor | null {
-  const cleaned = input
-    .replace(/[₺\s ]/g, '')
-    .replace(/\./g, '')
-    .replace(',', '.');
-  if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return null;
+  const raw = input.replace(/[₺\s ]/g, '');
+  const grouped = /^\d{1,3}(\.\d{3})*(,\d{1,2})?$/.test(raw);
+  const plain = /^\d+(,\d{1,2})?$/.test(raw);
+  if (!grouped && !plain) return null;
+  const normalized = raw.replace(/\./g, '').replace(',', '.');
   // Math.round guards against float artifacts like 1250.75*100 = 125074.999…
-  return Math.round(Number(cleaned) * 100);
+  return Math.round(Number(normalized) * 100);
+}
+
+/** Inverse of parseAmountMinor for edit prefills: 125075 → "1250,75", 12500 → "125". */
+export function minorToInput(minor: Minor): string {
+  const int = Math.trunc(minor / 100);
+  const dec = Math.abs(minor % 100);
+  return dec === 0 ? String(int) : `${int},${String(dec).padStart(2, '0')}`;
 }

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { formatCompactMinor, formatMinor, parseAmountMinor } from './money';
+import {
+  formatCompactMinor,
+  formatMinor,
+  minorToInput,
+  parseAmountMinor,
+} from './money';
 
 describe('formatMinor', () => {
   it('formats kuruş with tr-TR currency rules', () => {
@@ -31,6 +36,16 @@ describe('parseAmountMinor', () => {
     expect(parseAmountMinor('-50')).toBeNull(); // sign comes from type, §7
   });
 
+  it('accepts dots only as strict 3-digit thousands grouping', () => {
+    expect(parseAmountMinor('1.250')).toBe(125000);
+    expect(parseAmountMinor('12.345,67')).toBe(1234567);
+    expect(parseAmountMinor('1.250.000,75')).toBe(125000075);
+    // ambiguous decimal-dot habits must never become ×10/×100 mistakes
+    expect(parseAmountMinor('1.5')).toBeNull();
+    expect(parseAmountMinor('1.25')).toBeNull();
+    expect(parseAmountMinor('1234.567')).toBeNull(); // sloppy grouping
+  });
+
   it('round-trips formatMinor output', () => {
     for (const minor of [0, 50, 125075, 99999999]) {
       expect(parseAmountMinor(formatMinor(minor))).toBe(minor);
@@ -48,5 +63,23 @@ describe('formatCompactMinor', () => {
   it('keeps whole tiers clean and handles negatives', () => {
     expect(formatCompactMinor(100000)).toBe('₺1 B');
     expect(formatCompactMinor(-123400)).toBe('-₺1,2 B');
+  });
+
+  it('promotes tier when rounding would display 1.000', () => {
+    expect(formatCompactMinor(99999999)).toBe('₺1 Mn'); // ₺999.999,99
+    expect(formatCompactMinor(99994000)).toBe('₺999,9 B'); // ₺999.940
+    expect(formatCompactMinor(99960)).toBe('₺1 B'); // ₺999,60
+    expect(formatCompactMinor(99940)).toBe('₺999'); // ₺999,40
+  });
+});
+
+describe('minorToInput', () => {
+  it('renders edit-prefill strings and round-trips through the parser', () => {
+    expect(minorToInput(125075)).toBe('1250,75');
+    expect(minorToInput(12500)).toBe('125');
+    expect(minorToInput(50)).toBe('0,50');
+    for (const minor of [50, 12500, 125075, 99999999]) {
+      expect(parseAmountMinor(minorToInput(minor))).toBe(minor);
+    }
   });
 });
