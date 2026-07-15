@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Placeholder app icon (§13): lowercase "d" with a red-pen underline.
+       Serif system font stands in for Fraunces until P7 polish. -->
+  <rect width="64" height="64" rx="14" fill="#FAF9F4"/>
+  <text x="32" y="42" font-family="Georgia, serif" font-weight="700"
+        font-size="40" fill="#2447C5" text-anchor="middle">d</text>
+  <path d="M18 50 C26 47.5, 40 52, 47 49" stroke="#D2352B" stroke-width="3"
+        stroke-linecap="round" fill="none"/>
+</svg>
