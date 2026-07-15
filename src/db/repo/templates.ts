@@ -81,18 +81,25 @@ export async function moveTemplate(id: UUID, direction: -1 | 1): Promise<void> {
   );
 }
 
-/** One-tap path (§9.1): saves with today's date, bumps usageCount. */
-export async function applyTemplate(t: QuickTemplate): Promise<Transaction> {
+/**
+ * One-tap path (§9.1): saves with today's date, bumps usageCount.
+ * The backfill stepper (§9.15) passes an explicit past date + isBackfilled.
+ */
+export async function applyTemplate(
+  t: QuickTemplate,
+  opts?: { date?: string; isBackfilled?: boolean },
+): Promise<Transaction> {
   return db.transaction('rw', db.transactions, db.quickTemplates, async () => {
     const txn = await addTransaction({
       type: 'expense',
       amountMinor: t.amountMinor,
       categoryId: t.categoryId,
-      date: todayISO(),
+      date: opts?.date ?? todayISO(),
       note: t.note,
       merchant: t.merchant,
       necessity: t.necessity,
       templateId: t.id,
+      isBackfilled: opts?.isBackfilled,
     });
     await db.quickTemplates.update(t.id, { usageCount: t.usageCount + 1 });
     return txn;

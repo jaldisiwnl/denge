@@ -17,6 +17,11 @@ import { defaultCategories, defaultSavingsGoal, defaultSettings } from './defaul
 // Single source of truth (§6). Components never touch these tables directly;
 // all writes go through src/db/repo/* and reads through useLiveQuery.
 
+/** Lightweight presence-flags (clean days, dismissed gaps) — §8.8 allows it. */
+export interface UiFlag {
+  key: string;
+}
+
 class DengeDb extends Dexie {
   transactions!: Table<Transaction, string>;
   categories!: Table<Category, string>;
@@ -29,6 +34,7 @@ class DengeDb extends Dexie {
   quickTemplates!: Table<QuickTemplate, string>;
   monthlyCloses!: Table<MonthlyClose, string>;
   settings!: Table<Settings, string>;
+  uiFlags!: Table<UiFlag, string>;
 
   constructor() {
     super('denge');
@@ -53,6 +59,12 @@ class DengeDb extends Dexie {
     // few; filter isActive in JS instead. (P0/P1 review fix.)
     this.version(2).stores({
       recurringRules: 'id',
+    });
+
+    // v3: uiFlags — presence-only flags for lapse recovery (§8.8): clean-day
+    // marks and dismissed-gap keys. Not part of the §7 data model on purpose.
+    this.version(3).stores({
+      uiFlags: 'key',
     });
 
     // Runs exactly once, inside the DB-creation transaction — the seed can
