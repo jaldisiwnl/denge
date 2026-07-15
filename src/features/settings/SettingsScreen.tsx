@@ -33,6 +33,7 @@ export function SettingsScreen() {
   const [income, setIncome] = useState<string>();
   const [incomeError, setIncomeError] = useState(false);
   const [importPlan, setImportPlan] = useState<ImportPlan | null>(null);
+  const [demoBusy, setDemoBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const demoLoaded = useLiveQuery(hasDemoData);
 
@@ -77,6 +78,19 @@ export function SettingsScreen() {
       showToast(tr.settings.importInvalid);
     }
     if (fileRef.current) fileRef.current.value = '';
+  }
+
+  // Seeding takes a moment; a double-tap would race two writers into
+  // duplicate-id territory (P7 review fix).
+  async function runDemo(action: () => Promise<void>, doneMsg: string) {
+    if (demoBusy) return;
+    setDemoBusy(true);
+    try {
+      await action();
+      showToast(doneMsg);
+    } finally {
+      setDemoBusy(false);
+    }
   }
 
   async function confirmImport() {
@@ -300,16 +314,18 @@ export function SettingsScreen() {
         <div className="divide-y divide-grid">
           <button
             type="button"
-            onClick={() => void loadDemoData().then(() => showToast(tr.settings.demoLoaded))}
-            className={rowBtnCls}
+            disabled={demoBusy}
+            onClick={() => void runDemo(loadDemoData, tr.settings.demoLoaded)}
+            className={`${rowBtnCls} disabled:opacity-40`}
           >
             {tr.settings.demoLoad}
           </button>
           {demoLoaded && (
             <button
               type="button"
-              onClick={() => void clearDemoData().then(() => showToast(tr.settings.demoCleared))}
-              className={`${rowBtnCls} text-redpen`}
+              disabled={demoBusy}
+              onClick={() => void runDemo(clearDemoData, tr.settings.demoCleared)}
+              className={`${rowBtnCls} text-redpen disabled:opacity-40`}
             >
               {tr.settings.demoClear}
             </button>
