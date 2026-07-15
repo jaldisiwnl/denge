@@ -1,5 +1,6 @@
 import { tr } from '../../i18n/tr';
 import { useUiStore, type ThemePreference } from '../../app/theme';
+import { updateSettings } from '../../db/repo/settings';
 
 const options: { value: ThemePreference; label: string }[] = [
   { value: 'system', label: tr.settings.themeSystem },
@@ -9,7 +10,12 @@ const options: { value: ThemePreference; label: string }[] = [
 
 export function SettingsScreen() {
   const theme = useUiStore((s) => s.theme);
-  const setTheme = useUiStore((s) => s.setTheme);
+  const setThemeUi = useUiStore((s) => s.setTheme);
+
+  function setTheme(next: ThemePreference) {
+    setThemeUi(next); // live source of truth (§5: theme is UI state)
+    void updateSettings({ theme: next }); // mirrored so exports carry it (§7)
+  }
 
   return (
     <div className="space-y-4">
