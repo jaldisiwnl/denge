@@ -70,6 +70,26 @@ describe('detectLapse', () => {
     ]);
     expect(detectLapse(activity, TODAY, dismissed)).toBeNull();
   });
+
+  it('keeps remnant gaps inside a dismissed range resolved (post-backfill)', () => {
+    // Gap Jul 2–14 was handled; a Jul 10 backfill split it into Jul 2–9 and
+    // Jul 11–14 — both inside the dismissed range, so neither may resurface.
+    const withBackfill = [...activity, '2026-07-10'];
+    const dismissed = new Set(['2026-07-02_2026-07-14']);
+    expect(detectLapse(withBackfill, TODAY, dismissed)).toMatchObject({
+      from: '2026-06-11',
+      to: '2026-06-30',
+    });
+  });
+
+  it('a gap that grew past the dismissed range resurfaces', () => {
+    // Dismissed through Jul 14, but the silence continued to Jul 15.
+    const dismissed = new Set(['2026-07-02_2026-07-14']);
+    expect(detectLapse(['2026-07-01'], '2026-07-16', dismissed)).toMatchObject({
+      from: '2026-07-02',
+      to: '2026-07-15',
+    });
+  });
 });
 
 describe('pausedDaySet', () => {
