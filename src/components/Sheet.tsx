@@ -14,18 +14,22 @@ export function Sheet(props: {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Lock background scroll while any sheet is open; move focus into the
-    // dialog so keyboard/screen-reader users land inside it (P7 a11y).
+    // Mount-only: lock background scroll and move focus into the dialog.
+    // Focus must NOT re-run when the parent re-renders (inline onClose
+    // identities change), or typing/tapping users lose focus mid-flow.
     document.body.style.overflow = 'hidden';
     dialogRef.current?.focus();
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', onKey);
-    return () => {
-      document.body.style.overflow = '';
-      window.removeEventListener('keydown', onKey);
-    };
+    return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
   return (
