@@ -51,6 +51,8 @@ export function TrendCard() {
           </BarChart>
         </ResponsiveContainer>
       </div>
+      {/* Every MoM comparison carries the inflation caveat (§9.11.9) */}
+      <p className="mt-2 text-xs text-ink-soft">{tr.dashboard.inflationNote}</p>
       {/* Accessible companion table (§15) */}
       <ul className="sr-only">
         {data.map((m) => (
