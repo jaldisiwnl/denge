@@ -111,7 +111,9 @@ export function OnboardingScreen() {
             <PrimaryButton onClick={() => setStep(2)}>
               {tr.onboarding.next}
             </PrimaryButton>
-            <SkipButton onClick={() => void finish(false)} />
+            {/* Every Atla advances exactly one step; only the last screen
+                finishes — consistent behavior on every screen. */}
+            <SkipButton onClick={() => setStep(2)} />
           </div>
         </div>
       )}
