@@ -30,7 +30,7 @@ const EXPENSE_DEFAULTS: [emoji: string, name: string][] = [
 ];
 
 const INCOME_DEFAULTS: [emoji: string, name: string][] = [
-  ['💼', 'Maaş'],
+  ['💵', 'Harçlık'],
   ['💸', 'Ek Gelir'],
   ['🎉', 'Diğer Gelir'],
 ];

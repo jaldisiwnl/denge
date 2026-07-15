@@ -65,17 +65,20 @@ export async function loadDemoData(): Promise<void> {
   const settings = await getSettings();
   const startDay = settings?.monthStartDay ?? 1;
   const categories = await db.categories.toArray();
-  const cat = (name: string) =>
-    categories.find((c) => c.name === name)?.id ?? categories[0]!.id;
+  // Robust against renamed defaults: fall back to the KIND, never to an
+  // arbitrary category (income must not land in an expense bucket).
+  const cat = (names: string[], kind: 'expense' | 'income') =>
+    names.map((n) => categories.find((c) => c.name === n)?.id).find(Boolean) ??
+    categories.find((c) => c.kind === kind)!.id;
   const ids = {
-    market: cat('Market'),
-    yemek: cat('Yemek & Kafe'),
-    ulasim: cat('Ulaşım'),
-    ev: cat('Ev & Faturalar'),
-    abonelik: cat('Abonelikler'),
-    eglence: cat('Eğlence'),
-    giyim: cat('Giyim'),
-    maas: cat('Maaş'),
+    market: cat(['Market'], 'expense'),
+    yemek: cat(['Yemek & Kafe'], 'expense'),
+    ulasim: cat(['Ulaşım'], 'expense'),
+    ev: cat(['Ev & Faturalar'], 'expense'),
+    abonelik: cat(['Abonelikler'], 'expense'),
+    eglence: cat(['Eğlence'], 'expense'),
+    giyim: cat(['Giyim'], 'expense'),
+    maas: cat(['Harçlık', 'Maaş'], 'income'),
   };
 
   const rnd = mulberry32(4211);
@@ -135,11 +138,13 @@ export async function loadDemoData(): Promise<void> {
     const wd = isoWeekdayOf(date);
     const dayOfMonth = Number(date.slice(8, 10));
 
-    if (dayOfMonth === 15) {
-      add({ date, type: 'income', amountMinor: 4500000, categoryId: ids.maas, merchant: 'Maaş', recurringRuleId: `${P}rule-maas` });
+    // weekly allowance, deliberately irregular: some Mondays it just
+    // doesn't arrive (the owner's real income pattern)
+    if (wd === 1 && rnd() > 0.2) {
+      add({ date, type: 'income', amountMinor: 250000, categoryId: ids.maas, merchant: 'Harçlık', recurringRuleId: `${P}rule-harclik` });
     }
     if (dayOfMonth === 1) {
-      add({ date, amountMinor: 250000 + rnd() * 100000, categoryId: ids.ev, necessity: 'gerekli', merchant: 'Faturalar', recurringRuleId: `${P}rule-ev` });
+      add({ date, amountMinor: 40000 + rnd() * 20000, categoryId: ids.ev, necessity: 'gerekli', merchant: 'Faturalar', recurringRuleId: `${P}rule-ev` });
     }
     if (dayOfMonth === 5) {
       add({ date, amountMinor: 6000, categoryId: ids.abonelik, necessity: 'istek', merchant: 'Spotify', recurringRuleId: `${P}rule-spotify` });
@@ -152,12 +157,12 @@ export async function loadDemoData(): Promise<void> {
     }
 
     if (wd === 2 || wd === 6) {
-      add({ date, amountMinor: 25000 + rnd() * 45000, categoryId: ids.market, necessity: 'gerekli', merchant: 'Market' });
+      add({ date, amountMinor: 15000 + rnd() * 20000, categoryId: ids.market, necessity: 'gerekli', merchant: 'Market' });
     }
     if (wd === 1 || wd === 3 || wd === 5) {
       add({
         date,
-        amountMinor: 8000 + rnd() * 18000,
+        amountMinor: 8000 + rnd() * 12000,
         categoryId: ids.yemek,
         necessity: rnd() < 0.35 ? 'istek' : 'gerekli',
         merchant: rnd() < 0.5 ? 'Kahveci' : 'Lokanta',
@@ -205,10 +210,12 @@ export async function loadDemoData(): Promise<void> {
 
   await db.transactions.bulkAdd(txns);
 
-  // ---- recurring rules (subscriptions + fixed), already posted above
+  // ---- recurring rules (subscriptions + fixed), already posted above.
+  // Harçlık is weekly and NON-auto: each week a confirmation card asks —
+  // "geldi mi?" Onayla / Bu ay atla (the irregular-allowance flow).
   await db.recurringRules.bulkAdd([
-    { id: `${P}rule-maas`, name: 'Maaş', amountMinor: 4500000, categoryId: ids.maas, type: 'income', cadence: 'monthly', dayOfMonth: 15, isSubscription: false, autoPost: true, isActive: true, lastPostedDate: today },
-    { id: `${P}rule-ev`, name: 'Faturalar', amountMinor: 300000, categoryId: ids.ev, type: 'expense', cadence: 'monthly', dayOfMonth: 1, isSubscription: false, autoPost: true, isActive: true, lastPostedDate: today, necessity: 'gerekli' },
+    { id: `${P}rule-harclik`, name: 'Harçlık', amountMinor: 250000, categoryId: ids.maas, type: 'income', cadence: 'weekly', weekday: 1, isSubscription: false, autoPost: false, isActive: true, lastPostedDate: today },
+    { id: `${P}rule-ev`, name: 'Faturalar', amountMinor: 50000, categoryId: ids.ev, type: 'expense', cadence: 'monthly', dayOfMonth: 1, isSubscription: false, autoPost: true, isActive: true, lastPostedDate: today, necessity: 'gerekli' },
     { id: `${P}rule-spotify`, name: 'Spotify', amountMinor: 6000, categoryId: ids.abonelik, type: 'expense', cadence: 'monthly', dayOfMonth: 5, isSubscription: true, autoPost: true, isActive: true, lastPostedDate: today, necessity: 'istek' },
     { id: `${P}rule-netflix`, name: 'Netflix', amountMinor: 15000, categoryId: ids.abonelik, type: 'expense', cadence: 'monthly', dayOfMonth: 10, isSubscription: true, autoPost: true, isActive: true, lastPostedDate: today, necessity: 'istek' },
     { id: `${P}rule-spor`, name: 'Spor salonu', amountMinor: 40000, categoryId: ids.abonelik, type: 'expense', cadence: 'monthly', dayOfMonth: 3, isSubscription: true, autoPost: true, isActive: true, lastPostedDate: today, necessity: 'gerekli' },
