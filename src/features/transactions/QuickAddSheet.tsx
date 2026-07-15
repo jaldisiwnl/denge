@@ -22,7 +22,10 @@ import {
   createTemplateFromTransaction,
   listTemplates,
 } from '../../db/repo/templates';
-import type { Category, Mood, Necessity, QuickTemplate } from '../../db/types';
+import { markPurchased } from '../../db/repo/wishlist';
+import { deriveHourlyWageMinor, workMinutes } from '../../lib/timecost';
+import { formatWorkTime } from '../../i18n/workTime';
+import type { Category, Mood, Necessity, QuickTemplate, Regret } from '../../db/types';
 
 const MOODS: Mood[] = ['normal', 'stresli', 'sikilmis', 'sosyal', 'ac', 'kutlama'];
 
@@ -47,16 +50,22 @@ function displayAmount(raw: string): string {
 export function QuickAddSheet() {
   const close = useEphemeralStore((s) => s.closeQuickAdd);
   const editing = useEphemeralStore((s) => s.editTransaction);
+  const wishlistItem = useEphemeralStore((s) => s.wishlistPurchase);
   const showToast = useEphemeralStore((s) => s.showToast);
 
   const [type, setType] = useState<'expense' | 'income'>(editing?.type ?? 'expense');
-  const [amountStr, setAmountStr] = useState(
-    editing ? minorToInput(editing.amountMinor) : '',
-  );
+  const [amountStr, setAmountStr] = useState(() => {
+    if (editing) return minorToInput(editing.amountMinor);
+    if (wishlistItem?.estimatedAmountMinor) {
+      return minorToInput(wishlistItem.estimatedAmountMinor);
+    }
+    return '';
+  });
   const [categoryId, setCategoryId] = useState(editing?.categoryId);
   const [necessity, setNecessity] = useState(editing?.necessity);
+  const [regret, setRegret] = useState(editing?.regret);
   const [mood, setMood] = useState(editing?.mood);
-  const [note, setNote] = useState(editing?.note ?? '');
+  const [note, setNote] = useState(editing?.note ?? wishlistItem?.title ?? '');
   const [merchant, setMerchant] = useState(editing?.merchant ?? '');
   const [date, setDate] = useState(editing?.date ?? todayISO());
   const [detayOpen, setDetayOpen] = useState(
@@ -87,6 +96,13 @@ export function QuickAddSheet() {
     const monthKey = getMonthKey(todayISO(), settings.monthStartDay);
     return getEnvelopeStatus(categoryId, monthKey, settings.monthStartDay);
   }, [type, categoryId, editing?.id]);
+
+  // Time cost (§9.10): live under the amount for expenses only.
+  const hourlyWage = useLiveQuery(async () => {
+    const settings = await getSettings();
+    if (!settings?.showTimeCost) return null;
+    return deriveHourlyWageMinor(settings);
+  });
 
   // Templates whose category is archived are hidden, not deleted (§9.4).
   const templates = useLiveQuery(async () => {
@@ -133,9 +149,19 @@ export function QuickAddSheet() {
       mood: type === 'expense' ? mood : undefined,
     };
     if (editing) {
-      await updateTransaction(editing.id, fields);
+      await updateTransaction(editing.id, {
+        ...fields,
+        // Fresh regret answered in this edit (§7: "or transaction detail").
+        regret: regret !== editing.regret ? regret : undefined,
+      });
     } else {
-      await addTransaction({ type, ...fields });
+      const txn = await addTransaction({
+        type,
+        ...fields,
+        wishlistItemId: wishlistItem?.id,
+      });
+      // "Al" path (§9.9): link purchase back to the cooled-down wish.
+      if (wishlistItem) await markPurchased(wishlistItem.id, txn.id);
     }
     const categoryName = categories?.find((c) => c.id === categoryId)?.name ?? '';
     showToast(
@@ -253,6 +279,14 @@ export function QuickAddSheet() {
         >
           ₺{amountStr ? displayAmount(amountStr) : '0,00'}
         </p>
+        {/* Zaman maliyeti (§9.10): expenses only, live with typed digits */}
+        {type === 'expense' && hourlyWage && amountMinor ? (
+          <p className="text-xs text-ink-soft">
+            {ti(tr.timeCost.line, {
+              time: formatWorkTime(workMinutes(amountMinor, hourlyWage)),
+            })}
+          </p>
+        ) : null}
         {amountError && (
           <p className="mt-1 text-base text-redpen">{tr.quickAdd.amountEmpty}</p>
         )}
@@ -385,6 +419,38 @@ export function QuickAddSheet() {
           )}
         </div>
       )}
+
+      {/* Detail-only: regret answer (§7 "or transaction detail") */}
+      {editing &&
+        type === 'expense' &&
+        (necessity === 'istek' || necessity === 'bos') && (
+          <div className="mt-4">
+            <p className="text-base font-medium">{tr.review.question}</p>
+            <div className="mt-1.5 flex gap-2">
+              {(['degdi', 'eh', 'pisman'] as Regret[]).map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRegret((cur) => (cur === r ? undefined : r))}
+                  aria-pressed={regret === r}
+                  className={`min-h-11 flex-1 rounded-full border text-base ${
+                    regret === r
+                      ? r === 'pisman'
+                        ? 'border-redpen bg-redpen/15 font-medium text-redpen'
+                        : 'border-ballpoint bg-ballpoint/15 font-medium text-ballpoint'
+                      : 'border-grid text-ink-soft'
+                  }`}
+                >
+                  {r === 'degdi'
+                    ? tr.review.degdi
+                    : r === 'eh'
+                      ? tr.review.eh
+                      : tr.review.pisman}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
       {/* Detail-only actions: delete (two-step confirm) + Kısayol yap (§9.3) */}
       {editing && (
