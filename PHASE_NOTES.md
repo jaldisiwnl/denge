@@ -184,4 +184,28 @@ Finansçı + kullanıcı şapkalı gözden geçirme sonrası:
 2. **Soğuma → Kumbara köprüsü (AC):** Soğuma'ya tahmini fiyatlı bir istek ekle (bekleme 24sa seç); DevTools'ta `wishlist` kaydının `addedAt`ini 2 gün öncesine çek, yenile → "Hâlâ istiyor musun?" kartı + Özet'te rozet. Vazgeç → transfer sheet'i → Kumbaraya aktar → sayaçlar: üstte tahmin toplamı, altta kumbaradaki gerçek tutar; Kumbara segmentinde giriş "vazgeçme · <başlık>" rozetiyle görünmeli; Özet'teki `Kalan` aktarım kadar düşmeli (AC: birikim harcanabilirden düşer).
 3. **Kumbara:** Bütçe → Kumbara → hedef ekle (hedefli), Para ekle ile hedefi aş → fosforlu "Hedef tamam 🎉" toast'ı; Para çek ile bakiyenin altına inmeyi dene → "Kumbara eksiye inemez." Ayarlar'dan zaman maliyetini aç (gelir + saat gir) → quick-add'de tutar yazarken "≈ … çalışma" satırı canlı güncellenmeli.
 
-**DURDUM — P6 (İçgörüler & Ay Kapanışı) için onayını bekliyorum.**
+**DURDUM — P6 (İçgörüler & Ay Kapanışı) için onayını bekliyorum.** ✅ Onaylandı.
+
+---
+
+## P6 — İçgörüler & Ay Kapanışı (2026-07-15)
+
+### Ne yapıldı
+- **Metrikler (§8.4) `lib/stats`e eklendi:** boş oranı (güncel etiketlerle — geriye dönük dürüstlük sayılır), pişmanlık oranı (payda yalnız incelenenler), Dürtü Endeksi (50/50) + bantlar, dürüstlük sayaçları, net birikim oranı. `MonthStatsSnapshot` §7'nin istediği gibi burada tanımlandı; `MonthlyClose.stats` artık tam tipli.
+- **Not motoru (§8.6) `lib/grade`:** 30/25/20/15/10 ağırlıkları, verisi olmayan bileşenin ağırlığının kalanlara oransal dağıtımı, önceki kapanış şartlı +5/+5 gelişim bonusu, 100 tavanı, harf sınırları — **7 fixture testiyle** sabit (AC ✓).
+- **Ay Kapanışı (§9.12):** mali ayın son 2 gününde (ve kapatılmamış önceki ay için süresiz) Özet'te "Ayı kapat" kartı → 6 adımlı sihirbaz: özet ("Cebinde kalan"), bilinç dökümü (üçlü şerit + pişmanlık + dürüstlük), zarf performansı (aşımlarda kırmızı kalem), **birikim adımı** (önerilen devir = boşta kalan, düzenlenebilir, tek dokunuş `ayKapanisi` kaydı), gelecek ay (medyan önerili zarf düzenleme + isteğe bağlı boş limiti) ve **karne**: A–C'de kocaman Fraunces harfi + sayaçlı skor; D/F'te önce tek eyleme dönük gözlem (en büyük boş kategorisi / en çok aşan zarf / birikim / pişmanlık sırasıyla), harf sonra (no-shame ✓). Gelişim bonusu fosforlu satırla gösteriliyor; tek cümlelik not → arşiv.
+- **İçgörüler (§9.11):** ay seçicili 9 kart — Dürtü kadranı + 6 aylık mini seri, 12 aylık kümülatif **birikim çizgisi** (hedef tamamlanan aya fosforlu nokta), boş oranı trendi, dürüstlük kartı (min 5), ruh hali etkisi (n≥5, n görünür), haftanın günleri (+ "zayıf gün" cümlesi), pişmanlık şampiyonları (min 3 incelenmiş), sık mekânlar, ay farkları — son ikisi ve trendler **enflasyon dipnotlu**; dashboard'daki 6 aylık eğilime de dipnot eklendi. Altta Arşiv (harf + skor + not) ve Pazar Muhasebesi geçmişi sheet'i. Verisiz kartlar sessizce gizli (AC ✓).
+- 84 test yeşil (grade 7 + metrics 5 yeni), build temiz.
+
+### Teknik kararlar (ve nedenleri)
+1. **Karne kapanışta yeniden hesaplanıyor:** 4. adımdaki birikim transferi anlık `netSavingsRate`i değiştirir; "Ayı kapat"a basıldığında bağlam tazelenip donduruluyor — kullanıcının gördüğü karne, arşivlenen karne.
+2. **Aksiyon cümlesi önceliği** (D/F): boş oranı ≥ %10 ve tek kategori boşun ≥ %30'uysa o cephe; değilse en çok aşan zarf; değilse sıfır birikim; değilse en pişman kategori — hep tek, kazanılabilir hedef (P2/P6 ilkeleri).
+3. **Ruh hali kartı bilerek tüm-zaman** (§0.7 notu): aylık n'ler korelasyon için çok küçük; kart n değerlerini açıkça gösteriyor.
+4. **`closableMonth` önce kapanmamış önceki ayı sunar,** sonra son-2-gün penceresindeki mevcut ayı — kaçırılan kapanış sessizce kaybolmaz.
+
+### Elle doğrulama (tarayıcıda)
+1. **Karne (AC):** Ayarlar'da maaş gününü yarına/2 gün sonrasına denk gelecek şekilde ayarla (ya da önceki aya birkaç işlem gir) → Özet'te "Ayı kapat" kartı. Sihirbazı gez: 4. adımda önerilen tutarı taşı → 6. adımda skor sayarak yükselmeli. İkinci bir ayı daha kapatınca (daha az boş / daha çok birikimle) "+X gelişim" satırı görünmeli. İçgörü → Arşiv'de harf + not listelenmeli.
+2. **No-shame:** boş ağırlıklı bir ay kur (birkaç yüksek Boş gider) → kapanışta D/F: ekran önce "Boş harcamanın %X'i …" gözlemiyle açılmalı, harf ikincil ve gri.
+3. **İçgörüler:** ay seçiciyle gez — verisiz aylarda kartlar kaybolmalı, tek boş-durum cümlesi kalmalı. Ruh hali kartı ancak bir duygu için ≥5 kayıt varsa çıkmalı (n görünür). Ay farkları ve boş trendi kartlarının altında enflasyon dipnotu olmalı.
+
+**DURDUM — P7 (Polish & ship) için onayını bekliyorum.**
