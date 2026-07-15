@@ -155,4 +155,33 @@ Finansçı + kullanıcı şapkalı gözden geçirme sonrası:
 - **Tutarlılık:** ay gezgini tek-gün filtresini temizliyor; eğilim ve ısı haritası toplamları ileri tarihli işlemleri donut gibi hariç tutuyor.
 - **P7'ye notlar:** arşivli kategorili kural/şablon düzenlemede select'in yanıltıcı görünümü; ısı haritası hücrelerine klavye erişimi; Recharts kaynaklı bundle büyümesi (code-splitting).
 
-**DURDUM — P5 (Bilinç suite & Kumbara) için onayını bekliyorum.**
+**DURDUM — P5 (Bilinç suite & Kumbara) için onayını bekliyorum.** ✅ Onaylandı.
+
+---
+
+## P5 — Bilinç suite & Kumbara (2026-07-15)
+
+### Ne yapıldı
+- **Pazar Muhasebesi (§9.8):** Özet'te rozet kartı ("… {N} kalem seni bekliyor"), tam ekran akış — kart başına Adım A (etiket doğru mu? — akış içi yeniden etiketleme regret'i silmez; Gerekli'ye çekilen kalem teşekkürle atlanır ve emeklur) + Adım B ("Buna değdi mi?" → Değdi/Eh/Pişman, Sonra ile atlanabilir). Özet ekranı havuç-önce: En çok değen → pişmanlık özeti + en pişman kategori + kuru-ama-nazik satır → istek→boş dürüstlük alkışı.
+- **Soğuma Listesi (§9.9):** /islemler artık İşlemler | Soğuma segmentli. Ekleme sheet'i (başlık, tahmini fiyat, URL, not, 24/48/72sa/1hf bekleme), geri sayım halkası, süresi dolunca "Hâlâ istiyor musun?" → **Al** (quick-add tahmini tutar + başlıkla dolu açılır, kayıt işleme bağlanır) / **Vazgeç** → anında "₺X'i kurtardın. Kumbaraya atalım mı?" sheet'i — tek hedefte tek dokunuş, `SavingsEntry(source: vazgecme)` + çift yönlü bağlantı. Başlıkta iki sayaç: fosforlu "Vazgeçerek kurtardın: ₺X" + altta "₺Y'si gerçekten kumbarada."
+- **Kumbara segmenti (§9.13):** hedef kartları (ilerleme, hedef tamamsa yeşil + 🎉 rozeti, son tarih çipi, ≥2 ay veriyle "Bu hızla: Kasım 2026" projeksiyonu), hedef ekle/düzenle/arşivle (silme yok — §17), hedef detayı: hareket listesi (kaynak rozetleri; vazgeçme girişleri istek başlığını taşır — paranın hikâyesi), Para ekle / Para çek (iki aşamalı onay, sıfır altı engelli). Özet'e Kumbara kartı: toplam + "Bu ay +₺X" + 6 aylık kümülatif sparkline; ilk hareket öncesi ince "Kumbarayı başlat" CTA'sı.
+- **Zaman maliyeti (§9.10):** ayarlardan gelir + haftalık saat (+aç/kapa) → quick-add'de tutarın altında canlı "≈ 2 sa 15 dk çalışma", soğuma kartlarında da; gelir ve kumbarada asla.
+- **Detayda regret:** istek/boş harcamalar detay sheet'inde de cevaplanabilir (§7) — kaçırılan haftaların kalemleri için emniyet supabı.
+- 72 test yeşil (review-window 3, timecost 5 yeni).
+
+### Teknik kararlar (ve nedenleri)
+1. **Review penceresi = seçili güne biten 7 gün** (`reviewWindow` saf fonksiyonu): varsayılan Pazar'da bu tam olarak Pzt–Paz haftası — Pazar akşamı biten haftayı, sonraki günlerde de aynı haftayı gösterir; bir sonraki Pazar pencereyi devirir (testli). reviewDay değişirse kayan 7 günlük pencere olur (§0.7 en yalın yorum).
+2. **İki ayrı yazım yolu:** `updateTransaction` (review dışı: etiket değişimi regret'i temizler) vs `reviewTransaction` (akış içi: aynı adımda cevaplanan regret korunur; Gerekli'ye çekiş temizler + emekli eder). Kural yine repo katmanında — UI atlatamaz.
+3. **Vazgeç sayaçları iki ayrı gerçek:** üstteki sanal sayaç tahminlerin toplamı (motivasyon), alttaki gerçek `vazgecme` kaynaklı SavingsEntry toplamı (muhasebe). Bilerek eşitlenmiyor — köprünün amacı aradaki farkı görünür kılmak.
+4. **Hedef tamamlama tespiti `addSavingsEntry` içinde** (öncesi < hedef ≤ sonrası): kutlama toast'ı hangi ekrandan yatırılırsa yatırılsın tetiklenir (vazgeç köprüsü dahil).
+
+### Belirsizlik notları (§0.7)
+- Bekleyen (süresi dolmamış) istekler için küçük Sil butonu eklendi (spec sessiz; yazım hatası düzeltme ihtiyacı için).
+- Soğuma geri sayımları dakikada bir tazelenir; "Al" akışında bekleme süresi dolmadan satın alma yalnızca süre dolunca sunulur (spec'teki gibi).
+
+### Elle doğrulama (tarayıcıda)
+1. **Review (AC):** Geçen haftaya tarihli 2-3 İstek/Boş gider ekle (Detay'dan tarihi geçen haftaya çek) → Özet'te rozet kartı gelmeli. Akışta birini Gerekli'ye çek → "Tamam, gereğiydi" deyip kartı atlamalı; birine Pişman de → İşlemler listesinde tutarın üstünde elle çizilmiş kırmızı çizgi belirmeli. Özette "En çok değen" ve pişmanlık özetini gör.
+2. **Soğuma → Kumbara köprüsü (AC):** Soğuma'ya tahmini fiyatlı bir istek ekle (bekleme 24sa seç); DevTools'ta `wishlist` kaydının `addedAt`ini 2 gün öncesine çek, yenile → "Hâlâ istiyor musun?" kartı + Özet'te rozet. Vazgeç → transfer sheet'i → Kumbaraya aktar → sayaçlar: üstte tahmin toplamı, altta kumbaradaki gerçek tutar; Kumbara segmentinde giriş "vazgeçme · <başlık>" rozetiyle görünmeli; Özet'teki `Kalan` aktarım kadar düşmeli (AC: birikim harcanabilirden düşer).
+3. **Kumbara:** Bütçe → Kumbara → hedef ekle (hedefli), Para ekle ile hedefi aş → fosforlu "Hedef tamam 🎉" toast'ı; Para çek ile bakiyenin altına inmeyi dene → "Kumbara eksiye inemez." Ayarlar'dan zaman maliyetini aç (gelir + saat gir) → quick-add'de tutar yazarken "≈ … çalışma" satırı canlı güncellenmeli.
+
+**DURDUM — P6 (İçgörüler & Ay Kapanışı) için onayını bekliyorum.**
