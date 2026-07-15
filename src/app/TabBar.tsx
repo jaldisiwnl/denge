@@ -1,42 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { tr } from '../i18n/tr';
 import { useEphemeralStore } from './ui';
-
-// Minimal inline icons — the closed dependency list (§5) has no icon library,
-// and four simple ledger-flavored glyphs don't justify one.
-function IconOzet() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M4 11.5 12 5l8 6.5" />
-      <path d="M6 10.5V19h12v-8.5" />
-    </svg>
-  );
-}
-
-function IconIslemler() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
-      <path d="M5 7h14M5 12h14M5 17h9" />
-    </svg>
-  );
-}
-
-function IconButce() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <rect x="4" y="6" width="16" height="13" rx="2" />
-      <path d="M4 10h16M15 14.5h2" />
-    </svg>
-  );
-}
-
-function IconIcgoru() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
-      <path d="M5 19V10M10 19V5M15 19v-6M20 19V8" />
-    </svg>
-  );
-}
+import { IconButce, IconIcgoru, IconIslemler, IconOzet } from './navIcons';
 
 const tabs = [
   { to: '/', label: tr.tabs.ozet, icon: IconOzet },
@@ -67,7 +32,7 @@ export function TabBar() {
   return (
     <nav
       aria-label={tr.app.name}
-      className="fixed inset-x-0 bottom-0 z-10 mx-auto max-w-md border-t border-grid bg-card pb-[env(safe-area-inset-bottom)]"
+      className="fixed inset-x-0 bottom-0 z-10 mx-auto max-w-md border-t border-grid bg-card pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       <div className="flex items-stretch px-2 py-1">
         <Tab {...tabs[0]!} />

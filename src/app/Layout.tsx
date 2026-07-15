@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { TabBar } from './TabBar';
+import { SideNav } from './SideNav';
 import { Toast } from '../components/Toast';
 import { getSettings } from '../db/repo/settings';
 import { postDueRecurring } from '../db/repo/recurring';
@@ -39,11 +40,15 @@ export function Layout() {
   if (!settings.onboardingDone) return <OnboardingScreen />;
 
   return (
-    <div className="mx-auto min-h-dvh max-w-md bg-paper">
-      {/* pb reserves space for the fixed tab bar + FAB overhang */}
-      <main className="px-4 pb-28 pt-4">
-        <Outlet />
-      </main>
+    <div className="min-h-dvh bg-paper">
+      {/* Desktop: fixed sidebar + wide content; mobile: tab bar + FAB. */}
+      <SideNav />
+      <div className="lg:pl-60">
+        {/* pb reserves space for the fixed tab bar + FAB overhang (mobile) */}
+        <main className="mx-auto max-w-md px-4 pb-28 pt-4 lg:max-w-5xl lg:px-8 lg:pb-12 lg:pt-8">
+          <Outlet />
+        </main>
+      </div>
       <TabBar />
       {quickAddOpen && <QuickAddSheet key={editingId ?? wishlistId ?? 'new'} />}
       <Toast />
