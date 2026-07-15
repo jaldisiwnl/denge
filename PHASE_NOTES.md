@@ -47,4 +47,43 @@
 2. DevTools → Application → IndexedDB → `denge`: `categories`te 15 kayıt (12 gider + 3 gelir), `savingsGoals`ta Genel Kumbara (+ eklediysen hedefin), `settings`te `monthStartDay` seçtiğin gün ve `monthlyNetIncomeMinor` kuruş cinsinden (45.000 → 4500000) görünmeli.
 3. `npm test` → 20 test yeşil. Sıfırdan denemek için: DevTools → Application → Storage → IndexedDB'yi sil (`denge`) + Local Storage'daki `denge-ui`yi bırakabilirsin, yenile → onboarding baştan gelir.
 
-**DURDUM — P2 (Transactions) için onayını bekliyorum.**
+**DURDUM — P2 (Transactions) için onayını bekliyorum.** ✅ Onaylandı (üç-şapkalı gözden geçirme sonrası).
+
+---
+
+## P1 gözden geçirme düzeltmeleri (2026-07-15)
+Onay öncesi mühendis/finansçı/değerlendirmeci gözden geçirmesinde bulunanlar:
+- **`recurringRules.isActive` indeksi kaldırıldı** (Dexie şema v2): IndexedDB boolean'ı anahtar olarak desteklemez; indeks hiç çalışmayacak, P3'te sorgu patlatacaktı. Az sayıda kural JS'te filtrelenecek.
+- **`parseAmountMinor` sıkılaştırıldı:** nokta artık yalnızca 3'lü binlik gruplamada geçerli. `"1.5"` girdisi ₺15'e dönüşmek yerine reddediliyor — para uygulamasında 10 kat hata kabul edilemez.
+- **`formatCompactMinor` eşik yuvarlaması:** ₺999.950 artık "₺1.000 B" değil "₺1 Mn".
+- **Onboarding "Atla" tutarlılığı:** her Atla tam bir adım ilerletiyor; yalnızca son ekran bitiriyor.
+- **`.gitattributes`** eklendi (LF normalize), CRLF uyarıları sustu.
+
+---
+
+## P2 — Transactions (2026-07-15)
+
+### Ne yapıldı
+- **Hızlı ekleme sheet'i (§9.1):** FAB → tam ekran sheet; özel numpad (OS klavyesi açılmaz, virgül tuşu, canlı binlik gruplama), son 90 günün kullanım sıklığına göre sıralı kategori çipleri, zorunlu Bilinç etiketi (Gerekli/İstek/Boş, seçilmeden Kaydet pasif), katlanır Detay (not, mekân, tarih, ruh hali çipleri), Gider|Gelir geçişi. Kaydet → mono tutarlı toast.
+- **Kısayollar (§9.14):** sheet'in tepesinde yatay çip sırası — tek dokunuş anında kaydeder (bugünün tarihi, usageCount artar), uzun basış sheet'i önceden doldurur. Ayarlar'da tam CRUD + yukarı/aşağı sıralama (max 10). İşlem detayından "Kısayol yap".
+- **İşlem listesi (§9.3):** güne göre gruplama (Bugün/Dün/"8 Temmuz Salı"), gün net alt toplamı mono, yapışkan filtre çubuğu (mali ay gezgini ‹ ›, kategori, bilinç, not+mekân araması Türkçe küçük harf duyarlı), satırda emoji + bilinç noktası + tutar (gelir yeşil/+, pişman üstü çizili).
+- **Detay düzenleme:** satıra dokun → aynı sheet düzenleme kipinde; tüm alanlar değiştirilebilir, iki aşamalı Sil onayı. Review dışı etiket değişikliği `necessityRevisedAt` yazar ve `regret/reviewedAt` temizler (§9.2); `necessityOriginal` ilk kayıtta donar, bir daha değişmez.
+- **Kategori yöneticisi (§9.4):** ekle/düzenle/sırala/arşivle; işlemi olan kategori silinemez — Arşivle ya da "Taşı ve arşivle" (işlemler hedefe taşınır, kategori arşive iner). Arşivli kategorinin kısayolları quick-add sırasından gizlenir (silinmez).
+
+### Teknik kararlar (ve nedenleri)
+1. **Tek sheet, iki kip:** hızlı ekleme ve işlem detayı aynı `QuickAddSheet` — düzenlemede tip sabitlenir, Kısayollar sırası gizlenir, Sil/Kısayol-yap eklenir. İki ayrı form tutmak alan eşitliğini (ve §9.2 kurallarını) iki yerde yaşatmak demekti.
+2. **Dürüstlük kuralları repo katmanında** (`updateTransaction`): etiket değişince revizyon damgası + regret temizliği UI'da değil veri katmanında — hangi ekran düzenlerse düzenlesin kural atlanamaz. P5'teki review akışı kendi özel yolunu kullanacak.
+3. **Kısayol sıralaması:** tüm `sortOrder`lar 0 iken kullanım sayısı belirler; kullanıcı ilk kez sıralayınca herkese kalıcı 1..n yazılır ve manuel sıra kazanır (§9.14'ün "manual wins" kuralının en yalın hali).
+4. **İki aşamalı sil onayı** (buton "Emin misin? Sil"e dönüşür): ayrı bir dialog bileşeni ve fazladan dokunma katmanı yerine — mobilde daha hızlı, yanlışlıkla silmeye karşı yeterli.
+
+### Belirsizlik notları (§0.7)
+- Gün alt toplamı "day subtotal" net olarak yorumlandı: gelir − gider (gelir yoksa negatif görünür).
+- Pişman tutarındaki çizgi şimdilik düz CSS `line-through`; elle çizilmiş `<RedPen strike>` P4'te tasarım sistemi bileşeni olarak gelecek (§11.5).
+- Kategori sıralaması yukarı/aşağı oklarla (sürükle-bırak spec'te zorunlu değil, en yalın yorum).
+
+### Elle doğrulama (tarayıcıda)
+1. **5 saniye yolu:** FAB → rakamlar → kategori çipi → Boş → Kaydet. Toast'ta mono tutar görünmeli, İşlemler listesinde satır anında belirmeli (useLiveQuery). Tutar girmeden Kaydet → "Tutar boş olamaz."; Bilinç seçmeden buton pasif olmalı.
+2. **Kısayol:** bir işleme dokun → "Kısayol yap" → FAB'ı tekrar aç: çip en üstte. Çipe dokun → sheet kapanıp anında kayıt + toast (1 dokunuş). Uzun bas → form dolu gelmeli. Ayarlar → Kısayollar'dan sırala/düzenle/sil.
+3. **Dürüstlük kuralı:** bir gider ekle (İstek), sonra detayından etiketi Boş yap → DevTools'ta o kaydın `necessityOriginal: "istek"` kalmalı, `necessityRevisedAt` dolmalı. Filtrelerde Boş'u seç, arama kutusuna not/mekân yaz — liste daralmalı; ay okuyla önceki aya git — boş durum metni gelmeli.
+
+**DURDUM — P3 (Budgets & recurring) için onayını bekliyorum.**
