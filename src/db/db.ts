@@ -48,6 +48,13 @@ class DengeDb extends Dexie {
       settings: 'id',
     });
 
+    // v2: drops the recurringRules.isActive index — IndexedDB cannot use
+    // booleans as keys, so that index could never serve a query. Rules are
+    // few; filter isActive in JS instead. (P0/P1 review fix.)
+    this.version(2).stores({
+      recurringRules: 'id',
+    });
+
     // Runs exactly once, inside the DB-creation transaction — the seed can
     // never duplicate (default categories §9.4, Genel Kumbara §9.13).
     this.on('populate', () => {
