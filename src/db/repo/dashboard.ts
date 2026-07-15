@@ -3,7 +3,7 @@ import type { ISODate, Minor, MonthKey, UUID } from '../../lib/types';
 import { getDaysRemaining, getMonthKey, getMonthRange, shiftMonthKey } from '../../lib/fiscal';
 import { computeSafeToSpend, type SafeToSpend } from '../../lib/stats';
 import { dueDates } from '../../lib/recurrence';
-import { addDaysISO } from '../../lib/dates';
+import { addDaysISO, isoWeekdayOf } from '../../lib/dates';
 import { listEnvelopeStatuses } from './budgets';
 import { getSettings } from './settings';
 import { CATEGORY_COLORS } from '../defaults';
@@ -77,6 +77,62 @@ export async function getHeroData(today: ISODate): Promise<HeroData | null> {
     daysRemaining,
     monthLength,
     elapsedDays: monthLength - daysRemaining + 1,
+  };
+}
+
+export interface WeeklyStatus {
+  weekStart: ISODate; // Monday of the current week
+  incomeMinor: Minor; // money in this week (weekly allowance lands here)
+  spentMinor: Minor;
+  prevSpentMinor: Minor; // spend over the SAME elapsed span last week
+  gerekliMinor: Minor;
+  istekMinor: Minor;
+  bosMinor: Minor;
+  dailyAvgMinor: Minor;
+}
+
+/** "Bu hafta" money view: Mon→today vs the same span one week earlier. */
+export async function getWeeklyStatus(today: ISODate): Promise<WeeklyStatus> {
+  const elapsed = isoWeekdayOf(today); // 1..7 days incl. today
+  const weekStart = addDaysISO(today, -(elapsed - 1));
+  const prevStart = addDaysISO(weekStart, -7);
+  const prevEnd = addDaysISO(today, -7);
+
+  const txns = await db.transactions
+    .where('date')
+    .between(prevStart, today, true, true)
+    .toArray();
+
+  let incomeMinor = 0;
+  let spentMinor = 0;
+  let prevSpentMinor = 0;
+  let gerekliMinor = 0;
+  let istekMinor = 0;
+  let bosMinor = 0;
+  for (const t of txns) {
+    if (t.date >= weekStart) {
+      if (t.type === 'income') {
+        incomeMinor += t.amountMinor;
+        continue;
+      }
+      spentMinor += t.amountMinor;
+      if (t.necessity === 'gerekli') gerekliMinor += t.amountMinor;
+      else if (t.necessity === 'istek') istekMinor += t.amountMinor;
+      else if (t.necessity === 'bos') bosMinor += t.amountMinor;
+    } else if (t.date <= prevEnd && t.type === 'expense') {
+      prevSpentMinor += t.amountMinor;
+    }
+  }
+
+  return {
+    weekStart,
+    incomeMinor,
+    spentMinor,
+    prevSpentMinor,
+    gerekliMinor,
+    istekMinor,
+    bosMinor,
+    dailyAvgMinor: Math.round(spentMinor / elapsed),
   };
 }
 
