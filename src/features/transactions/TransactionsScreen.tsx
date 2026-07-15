@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { format } from 'date-fns';
 import { tr as trLocale } from 'date-fns/locale';
@@ -30,9 +31,19 @@ export function TransactionsScreen() {
   const startDay = settings?.monthStartDay ?? 1;
   const currentKey = getMonthKey(todayISO(), startDay);
 
+  // Dashboard tap-throughs (§9.7): donut slice → category, heatmap → day.
+  const navState = useLocation().state as
+    | { categoryId?: string; date?: string }
+    | null;
+
   const [monthOverride, setMonthOverride] = useState<string>();
-  const monthKey = monthOverride ?? currentKey;
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState(
+    navState?.categoryId ?? 'all',
+  );
+  const [dateFilter, setDateFilter] = useState(navState?.date);
+  const monthKey =
+    monthOverride ??
+    (dateFilter ? getMonthKey(dateFilter, startDay) : currentKey);
   const [necessityFilter, setNecessityFilter] = useState<'all' | Necessity>('all');
   const [search, setSearch] = useState('');
 
@@ -51,6 +62,7 @@ export function TransactionsScreen() {
     const q = search.trim().toLocaleLowerCase('tr');
     return (transactions ?? [])
       .filter((t) => categoryFilter === 'all' || t.categoryId === categoryFilter)
+      .filter((t) => !dateFilter || t.date === dateFilter)
       .filter((t) => necessityFilter === 'all' || t.necessity === necessityFilter)
       .filter(
         (t) =>
@@ -62,7 +74,7 @@ export function TransactionsScreen() {
         (a, b) =>
           b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt),
       );
-  }, [transactions, categoryFilter, necessityFilter, search]);
+  }, [transactions, categoryFilter, dateFilter, necessityFilter, search]);
 
   // Group by day, preserving the date-desc order.
   const groups = useMemo(() => {
@@ -80,7 +92,10 @@ export function TransactionsScreen() {
   });
   const hasAnyThisMonth = (transactions?.length ?? 0) > 0;
   const filtersActive =
-    categoryFilter !== 'all' || necessityFilter !== 'all' || search.trim() !== '';
+    categoryFilter !== 'all' ||
+    necessityFilter !== 'all' ||
+    search.trim() !== '' ||
+    Boolean(dateFilter);
 
   return (
     <div>
@@ -114,6 +129,16 @@ export function TransactionsScreen() {
           className="w-full rounded-full border border-grid bg-card px-4 py-2 text-base outline-none placeholder:text-ink-soft/50"
         />
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          {dateFilter && (
+            <button
+              type="button"
+              onClick={() => setDateFilter(undefined)}
+              className="flex shrink-0 items-center gap-1 rounded-full border border-ballpoint bg-ballpoint/15 px-3 py-1.5 font-mono text-base text-ballpoint"
+            >
+              {format(parseLocalDate(dateFilter), 'd MMM', { locale: trLocale })}
+              <span aria-hidden>✕</span>
+            </button>
+          )}
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}

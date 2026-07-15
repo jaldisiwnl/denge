@@ -1,7 +1,14 @@
 import { Link } from 'react-router-dom';
 import { tr } from '../../i18n/tr';
+import { HeroCard } from './HeroCard';
+import { StreakCard } from './StreakCard';
+import { DonutCard } from './DonutCard';
+import { TrendCard } from './TrendCard';
+import { HeatmapCard } from './HeatmapCard';
 import { PendingRecurringCards } from './PendingRecurringCards';
+import { LapseCard } from '../recovery/LapseCard';
 
+// Card order per §9.7. Kumbara card joins in P5.
 export function DashboardScreen() {
   return (
     <div className="space-y-4">
@@ -19,16 +26,14 @@ export function DashboardScreen() {
         </Link>
       </header>
 
-      {/* Hero placeholder: proves the token/font stack — squared-paper texture,
-          Fraunces display, mono amount. Real safe-to-spend math lands in P4. */}
-      <section className="paper-grid rounded-card border border-grid bg-card p-4">
-        <p className="text-xs text-ink-soft">{tr.app.tagline}</p>
-        <p className="mt-2 font-mono text-hero font-medium">₺0,00</p>
-      </section>
-
+      <HeroCard />
+      {/* Pending cards (§9.7.2): lapse recovery always first */}
+      <LapseCard />
       <PendingRecurringCards />
-
-      <p className="text-base text-ink-soft">{tr.common.comingSoon}</p>
+      <StreakCard />
+      <DonutCard />
+      <TrendCard />
+      <HeatmapCard />
     </div>
   );
 }
