@@ -21,3 +21,8 @@ export function daysAgoISO(days: number): ISODate {
 export function addDaysISO(date: ISODate, delta: number): ISODate {
   return format(addDays(parseLocalDate(date), delta), 'yyyy-MM-dd');
 }
+
+/** ISO weekday of a date string: 1 (Mon) – 7 (Sun). */
+export function isoWeekdayOf(date: ISODate): number {
+  return ((parseLocalDate(date).getDay() + 6) % 7) + 1;
+}
