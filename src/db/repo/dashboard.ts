@@ -6,6 +6,7 @@ import { dueDates } from '../../lib/recurrence';
 import { addDaysISO } from '../../lib/dates';
 import { listEnvelopeStatuses } from './budgets';
 import { getSettings } from './settings';
+import { CATEGORY_COLORS } from '../defaults';
 
 export interface HeroData extends SafeToSpend {
   monthKey: MonthKey;
@@ -132,6 +133,17 @@ export async function getDonutData(
       amountMinor: restMinor,
     });
   }
+  // The 8-step palette wraps across 12+ categories, so two top-6 slices can
+  // share a color (e.g. Market & Eğitim). Guarantee uniqueness within THIS
+  // chart by reassigning duplicates to unused palette colors (review fix).
+  const used = new Set<string>();
+  for (const slice of top) {
+    if (used.has(slice.color)) {
+      slice.color =
+        CATEGORY_COLORS.find((c) => !used.has(c)) ?? slice.color;
+    }
+    used.add(slice.color);
+  }
   return { slices: top, totalMinor };
 }
 
@@ -159,7 +171,8 @@ export async function getTrendData(today: ISODate): Promise<TrendMonth[] | null>
     let totalMinor = 0;
     let bosMinor = 0;
     for (const t of txns) {
-      if (t.type !== 'expense') continue;
+      // Future-dated rows stay out of spend aggregates (§17), matching donut.
+      if (t.type !== 'expense' || t.date > today) continue;
       totalMinor += t.amountMinor;
       if (t.necessity === 'bos') bosMinor += t.amountMinor;
     }
@@ -191,7 +204,8 @@ export async function getHeatmapData(
 
   const byDay = new Map<ISODate, { spent: Minor; bos: boolean; backfilled: boolean }>();
   for (const t of txns) {
-    if (t.type !== 'expense') continue;
+    // Future days render as empty "future" cells; planned spend isn't spend.
+    if (t.type !== 'expense' || t.date > today) continue;
     const d = byDay.get(t.date) ?? { spent: 0, bos: false, backfilled: false };
     d.spent += t.amountMinor;
     if (t.necessity === 'bos') d.bos = true;
