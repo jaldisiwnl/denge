@@ -1,0 +1,29 @@
+/* Design tokens — "Modern Bakkal Defteri" (spec §11.1)
+   Single source of truth for color; Tailwind reads these via var(). */
+
+:root,
+[data-theme='light'] {
+  --paper: #faf9f4;
+  --card: #ffffff;
+  --grid: #e7e4d9;
+  --ink: #1c2b4b;
+  --ink-soft: #5c6884;
+  --ballpoint: #2447c5;
+  --redpen: #d2352b;
+  --green: #1f7a4d;
+  --highlight: #f5c84b;
+}
+
+/* "Gece Defteri" */
+[data-theme='dark'] {
+  --paper: #0f1524;
+  --card: #161d30;
+  --grid: #232b42;
+  --ink: #e9e8df;
+  --ink-soft: #9aa3b8;
+  --ballpoint: #7c97ff;
+  --redpen: #ff6b5e;
+  --green: #4cc38a;
+  /* highlight is identical in both themes by design */
+  --highlight: #f5c84b;
+}
