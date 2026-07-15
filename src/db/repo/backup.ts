@@ -109,7 +109,8 @@ export async function downloadCsvExport(): Promise<void> {
     );
   const head = 'tarih;tur;tutar;kategori;etiket;mekan;not;ruhHali;degerlendirme';
   triggerDownload(
-    new Blob(['﻿' + [head, ...rows].join('\r\n')], {
+    // Explicit BOM escape — an invisible literal char is too easy to lose.
+    new Blob(['\uFEFF' + [head, ...rows].join('\r\n')], {
       type: 'text/csv;charset=utf-8',
     }),
     `denge-islemler-${todayISO()}.csv`,
@@ -173,6 +174,16 @@ export async function planImport(file: BackupFile): Promise<ImportPlan> {
         winners.push(record);
         addedCount++;
         continue;
+      }
+      // Rules merge the posting cursor: importing an older backup must not
+      // rewind lastPostedDate, or the engine would re-post the gap and
+      // duplicate every fixed transaction the local db already has.
+      if (store === 'recurringRules') {
+        const localCursor = String(current.lastPostedDate ?? '');
+        const incomingCursor = String(record.lastPostedDate ?? '');
+        if (localCursor > incomingCursor) {
+          record.lastPostedDate = current.lastPostedDate;
+        }
       }
       if (JSON.stringify(current) === JSON.stringify(record)) continue;
       if (tsField) {
