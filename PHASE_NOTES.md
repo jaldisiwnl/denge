@@ -219,4 +219,33 @@ Kullanıcı + finansçı şapkalı gözden geçirme sonrası:
 - **Arşivlenen kumbara hedefi geri çıkarılabilir** ("Arşivden çıkar") — yanlışlıkla arşivleme tek yönlü kalmasın.
 - **İçgörüler boş-durum koşulu** boş oranı trendi ve arşivi de sayıyor — kart varken "içgörü yok" yazmıyor. Kullanılmayan bir prop temizlendi.
 
-**DURDUM — P7 (Polish & ship) için onayını bekliyorum.**
+**DURDUM — P7 (Polish & ship) için onayını bekliyorum.** ✅ Onaylandı.
+
+---
+
+## P7 — Polish & ship (2026-07-15)
+
+### Ne yapıldı
+- **Yedekleme (§14):** JSON dışa aktarım tüm depoların tam dökümü (`schemaVersion: 2`, `denge-yedek-YYYY-MM-DD.json`); CSV işlemleri Excel'in Türkçe yereliyle uyumlu (noktalı virgül, virgül ondalık, UTF-8 BOM). İçe aktarım v1 yedeklerini yerinde göç ettirir (eksik depolar eklenir), id bazlı upsert yapar (zaman damgalı kayıtlarda yeni kazanır, diğerlerinde gelen kazanır), uygulamadan önce **"X yeni, Y güncellenecek"** özeti + "Önce yedeği indir" seçeneği gösterir; yazım tek Dexie transaction'ında.
+- **Demo seed (§18):** deterministik ~4 aylık veri — 15'inde maaş, aylık faturalar, 3 abonelik (kuralları + geçmiş kayıtları), haftalık market/yemek/ulaşım desenleri, akşam/hafta sonu ağırlıklı ruh halli boş harcamalar, 6 incelenmiş kalem (2'si dürüst istek→boş), her statüden birer soğuma kalemi (vazgeçilen kumbaraya aktarılmış), 🎸 Yeni gitar %40 dolu (üç kaynaktan), 3 kısayol, en eski ayda kısmen doldurulmuş 4 günlük boşluk ve **gerçek veriden hesaplanmış** 2 ay kapanışı (gelişim bonusu doğal oluşur). Tüm id'ler `demo-` önekli; "Demoyu temizle" yalnız onları siler, sahibin verisine dokunmaz.
+- **PWA/perf:** font precache'i yalnız latin+latin-ext (41→26 girdi); `manualChunks` ile vendor/recharts ayrıştı — hiçbir chunk 500 KB'ı aşmıyor (ana chunk 185 KB); tarayıcı çubuğu rengi artık uygulama içi tema geçişini izliyor. Preview smoke: sw + manifest 200, NavigationRoute çevrimdışı fallback kayıtlı.
+- **A11y:** ısı haritası hücreleri klavyeyle gezilebilir (rol/odak/Enter-Space + görünür odak çerçevesi), sheet açılışta odağı içine alıyor; kural/şablon düzenlemede arşivli kategori artık "(arşiv)" etiketiyle listede — görünen ile kaydedilen aynı.
+- **Ayarlar:** Yedekleme + Demo bölümleri, birikim hedefi oranı seçici (%5–%50, karneyi besler), hakkında satırı. **README:** kurulum, mimari harita, veri akışı, kategori rengi ekleme rehberi (spec'in istediği), yedekleme ve test haritası.
+- 84 test yeşil, build temiz.
+
+### Teknik kararlar (ve nedenleri)
+1. **İçe aktarımda "yeni kazanır" yalnız zaman damgalı depolarda** (transactions/wishlist/goals/entries/closes); kategoriler, bütçeler, kurallar ve ayarlarda gelen kazanır — damgasız kayıtlar için "hangisi yeni" bilinemez, belirsiz sezgisellik yerine belgeli basit kural (§0.7).
+2. **Demo kapanışları fabrikasyon değil:** üretilen veriden `buildCloseContext` ile hesaplanıyor — karne, arşiv ve gelişim bonusu gerçek motorla tutarlı; harfler veriden çıkar (B civarı hedeflendi).
+3. **`uiFlags` yedeğe dahil:** temiz gün işaretleri ve kapatılan boşluklar taşınmazsa geri yüklemede seri matematiği değişirdi; v1 yedeklerinde yoksa boş eklenir.
+4. **Demo zarfları yalnız o kategoride zarf yoksa eklenir** — sahibin gerçek zarfı asla ezilmez; temizlik yalnız `demo-` id'li olanları alır.
+
+### Elle doğrulama (AC'ler)
+1. **Çevrimdışı:** `npm run build && npm run preview` → uygulamayı aç, bir kez gezin → DevTools → Network → Offline yap → yenile: uygulama tüm sekmeleriyle açılmalı, fontlar dahil (precache). Ana ekrana ekleyip uçak modunda da dene.
+2. **Kayıpsız gidiş-dönüş:** Ayarlar → JSON dışa aktar → hemen İçe aktar ile aynı dosyayı seç → özet **"0 yeni, 0 güncellenecek"** demeli (birebir aynı veri). Demo yükle → dışa aktar → demoyu temizle → içe aktar → demo verisi aynen geri gelmeli.
+3. **v1 göçü:** dışa aktardığın dosyada `schemaVersion`ı 1 yapıp `savingsGoals/savingsEntries/quickTemplates/uiFlags` anahtarlarını sil → içe aktar → "v1 — taşındı" notu görünmeli ve içe aktarım hatasız tamamlanmalı.
+4. **Demo turu:** Demo verisi yükle → Özet (dolu hero, kartlar, grafikler, ısı haritasında soluk boşluk günleri), İşlemler, Soğuma (üç statü + sayaçlar), Bütçe (zarflar/sabitler + Yıllık Şok/Kumbara %40 gitar), İçgörü (kartlar + arşivde 2 karne) — hepsi tek dokunuşta dolu. "Demoyu temizle" → yalnız demo kayıtları gitmeli.
+
+---
+
+# 🏁 v1.1 spec'inin tüm fazları (P0–P7) tamamlandı.
+Parking lot (v2, §19) dışında açık iş yok. İyi birikimler! 🏦
