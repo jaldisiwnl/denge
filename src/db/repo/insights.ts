@@ -1,7 +1,7 @@
 import { db } from '../db';
 import type { Mood, Transaction } from '../types';
 import type { Minor, MonthKey } from '../../lib/types';
-import { getMonthRange, shiftMonthKey } from '../../lib/fiscal';
+import { getMonthKey, getMonthRange, shiftMonthKey } from '../../lib/fiscal';
 import { addDaysISO, isoWeekdayOf, todayISO } from '../../lib/dates';
 import { computeMonthMetrics } from '../../lib/stats';
 
@@ -65,7 +65,8 @@ export async function getSavingsLine(
       const before = running;
       running += e.amountMinor;
       if (before < target && running >= target) {
-        completionMonths.add(e.date.slice(0, 7) as MonthKey);
+        // Fiscal month, not calendar month — the chart's x-axis is fiscal.
+        completionMonths.add(getMonthKey(e.date, startDay));
         break;
       }
     }
