@@ -31,7 +31,7 @@ export async function hasDemoData(): Promise<boolean> {
   );
 }
 
-/** Removes only demo-prefixed records (§18). */
+/** Removes only demo-originated records (§18). */
 export async function clearDemoData(): Promise<void> {
   const tables = [
     db.transactions,
@@ -44,7 +44,16 @@ export async function clearDemoData(): Promise<void> {
     db.monthlyCloses,
   ];
   await db.transaction('rw', tables, async () => {
+    // Demo rules keep auto-posting while loaded; those rows get real uuids
+    // but descend from demo- rules — they must go too (fake money), while
+    // deliberate user entries (e.g. a demo template tap) stay untouched.
+    await db.transactions
+      .filter(
+        (t) => t.id.startsWith(P) || Boolean(t.recurringRuleId?.startsWith(P)),
+      )
+      .delete();
     for (const table of tables) {
+      if (table === db.transactions) continue;
       await table.where(':id').startsWith(P).delete();
     }
   });
