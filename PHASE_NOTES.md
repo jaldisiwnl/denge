@@ -208,4 +208,15 @@ Finansçı + kullanıcı şapkalı gözden geçirme sonrası:
 2. **No-shame:** boş ağırlıklı bir ay kur (birkaç yüksek Boş gider) → kapanışta D/F: ekran önce "Boş harcamanın %X'i …" gözlemiyle açılmalı, harf ikincil ve gri.
 3. **İçgörüler:** ay seçiciyle gez — verisiz aylarda kartlar kaybolmalı, tek boş-durum cümlesi kalmalı. Ruh hali kartı ancak bir duygu için ≥5 kayıt varsa çıkmalı (n görünür). Ay farkları ve boş trendi kartlarının altında enflasyon dipnotu olmalı.
 
+---
+
+## P5/P6 gözden geçirme düzeltmeleri (2026-07-15)
+Kullanıcı + finansçı şapkalı gözden geçirme sonrası:
+- **Pazar Muhasebesi akışı donmuş liste kullanıyor:** cevaplanan kalem canlı sorgudan düşünce adımlar kayıyor, son kalemde rozet kartı kaybolup akışı **özet gösterilmeden** söküyordu. Rozet artık akışı açarken listeyi donduruyor ve akış açıkken görünür kalıyor; kart etiketleri prop mutasyonu yerine yerel state'ten okunuyor.
+- **Birikim çizgisindeki hedef-tamamlama noktası mali aya oturtuldu** (takvim ayı `slice(0,7)` yerine `getMonthKey`) — maaş günü 1 değilken nokta yanlış aya düşüyordu.
+- **"Gelecek ay" zarf önerileri kapatılan ayı kapsıyor:** medyan penceresi kapatılan ay +1 referanslı — yeni biten ayın gerçekliği öneriye giriyor.
+- **Detaydaki regret çipleri yalnız-seç:** eski davranışta seçim kaldırılınca görsel boş ama kayıt eskiyi koruyordu (dürüst olmayan görünüm).
+- **Arşivlenen kumbara hedefi geri çıkarılabilir** ("Arşivden çıkar") — yanlışlıkla arşivleme tek yönlü kalmasın.
+- **İçgörüler boş-durum koşulu** boş oranı trendi ve arşivi de sayıyor — kart varken "içgörü yok" yazmıyor. Kullanılmayan bir prop temizlendi.
+
 **DURDUM — P7 (Polish & ship) için onayını bekliyorum.**
