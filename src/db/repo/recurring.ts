@@ -42,7 +42,13 @@ export async function updateRule(
 ): Promise<void> {
   const existing = await db.recurringRules.get(id);
   if (!existing) return;
-  await db.recurringRules.put(stripUndefined({ ...existing, ...patch }));
+  const next = stripUndefined({ ...existing, ...patch });
+  // Reactivating a paused rule must NOT backfill the paused period with
+  // phantom transactions — posting resumes from today (P3/P4 review fix).
+  if (patch.isActive === true && !existing.isActive) {
+    next.lastPostedDate = addDaysISO(todayISO(), -1);
+  }
+  await db.recurringRules.put(next);
 }
 
 /** Posted transactions keep their recurringRuleId; only the rule goes. */
