@@ -431,7 +431,9 @@ export function QuickAddSheet() {
                 <button
                   key={r}
                   type="button"
-                  onClick={() => setRegret((cur) => (cur === r ? undefined : r))}
+                  // select-only: a deselect could not be persisted honestly,
+                  // so it must not be offered (P5/P6 review fix)
+                  onClick={() => setRegret(r)}
                   aria-pressed={regret === r}
                   className={`min-h-11 flex-1 rounded-full border text-base ${
                     regret === r

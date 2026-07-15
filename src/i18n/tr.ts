@@ -267,6 +267,7 @@ export const tr = {
     amount: 'Tutar (₺)',
     note: 'Not',
     archive: 'Arşivle',
+    unarchive: 'Arşivden çıkar',
     archivedSection: 'Arşiv',
     goalDone: 'Hedef tamam 🎉',
     projection: 'Bu hızla: {date}',

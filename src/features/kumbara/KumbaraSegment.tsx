@@ -75,6 +75,13 @@ export function KumbaraSegment() {
                 <span className="font-mono text-xs text-ink-soft">
                   {formatMinor(data.totals.get(g.id) ?? 0)}
                 </span>
+                <button
+                  type="button"
+                  onClick={() => void setGoalArchived(g.id, false)}
+                  className="rounded-full border border-grid px-3 py-1 text-xs text-ink-soft"
+                >
+                  {tr.kumbara.unarchive}
+                </button>
               </div>
             ))}
           </div>
