@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { tr } from '../../i18n/tr';
+import { PendingRecurringCards } from './PendingRecurringCards';
 
 export function DashboardScreen() {
   return (
@@ -24,6 +25,8 @@ export function DashboardScreen() {
         <p className="text-xs text-ink-soft">{tr.app.tagline}</p>
         <p className="mt-2 font-mono text-hero font-medium">₺0,00</p>
       </section>
+
+      <PendingRecurringCards />
 
       <p className="text-base text-ink-soft">{tr.common.comingSoon}</p>
     </div>

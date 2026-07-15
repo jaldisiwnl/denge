@@ -3,9 +3,13 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Sheet } from '../../components/Sheet';
 import { Numpad, type NumpadKey } from '../../components/Numpad';
 import { tr } from '../../i18n/tr';
+import { ti } from '../../i18n/interpolate';
 import { useEphemeralStore } from '../../app/ui';
 import { formatMinor, parseAmountMinor, minorToInput } from '../../lib/money';
+import { getMonthKey } from '../../lib/fiscal';
 import { daysAgoISO, todayISO } from '../../lib/dates';
+import { getSettings } from '../../db/repo/settings';
+import { getEnvelopeStatus } from '../../db/repo/budgets';
 import { listCategories } from '../../db/repo/categories';
 import {
   addTransaction,
@@ -73,6 +77,16 @@ export function QuickAddSheet() {
         a.sortOrder - b.sortOrder,
     );
   }, [type]);
+
+  // Live envelope status for the in-the-moment nudge (§9.1.4). Current
+  // fiscal month only; hidden while editing an existing transaction.
+  const envelope = useLiveQuery(async () => {
+    if (type !== 'expense' || !categoryId || editing) return null;
+    const settings = await getSettings();
+    if (!settings) return null;
+    const monthKey = getMonthKey(todayISO(), settings.monthStartDay);
+    return getEnvelopeStatus(categoryId, monthKey, settings.monthStartDay);
+  }, [type, categoryId, editing?.id]);
 
   // Templates whose category is archived are hidden, not deleted (§9.4).
   const templates = useLiveQuery(async () => {
@@ -258,6 +272,38 @@ export function QuickAddSheet() {
           />
         ))}
       </div>
+
+      {/* Live envelope line (§9.1.4): informative, never blocking. */}
+      {envelope &&
+        (() => {
+          const remaining = envelope.totalMinor - envelope.spentMinor;
+          const categoryName =
+            categories?.find((c) => c.id === categoryId)?.name ?? '';
+          if (amountMinor && amountMinor > remaining) {
+            return (
+              <p className="mt-1.5 text-center text-xs text-redpen" aria-live="polite">
+                {ti(tr.envelope.wouldExceed, {
+                  amount: formatMinor(amountMinor - Math.max(0, remaining)),
+                })}
+              </p>
+            );
+          }
+          if (remaining < 0) {
+            return (
+              <p className="mt-1.5 text-center text-xs text-redpen" aria-live="polite">
+                {ti(tr.envelope.alreadyExceeded, { amount: formatMinor(-remaining) })}
+              </p>
+            );
+          }
+          return (
+            <p className="mt-1.5 text-center text-xs text-ink-soft" aria-live="polite">
+              {ti(tr.envelope.remaining, {
+                category: categoryName,
+                amount: formatMinor(remaining),
+              })}
+            </p>
+          );
+        })()}
 
       {/* Bilinç etiketi — required for expenses (§9.2) */}
       {type === 'expense' && (
