@@ -1,11 +1,17 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { tr } from '../../i18n/tr';
 import { EnvelopesSegment } from './EnvelopesSegment';
 import { RecurringSegment } from '../recurring/RecurringSegment';
+import { KumbaraSegment } from '../kumbara/KumbaraSegment';
 
-// /butce segments (§10): Zarflar | Sabitler — Kumbara joins in P5.
+type Segment = 'zarflar' | 'sabitler' | 'kumbara';
+
+// /butce segments (§10): Zarflar | Sabitler | Kumbara.
 export function BudgetsScreen() {
-  const [segment, setSegment] = useState<'zarflar' | 'sabitler'>('zarflar');
+  // Dashboard kumbara card taps through with { segment: 'kumbara' } (§9.7.3).
+  const navState = useLocation().state as { segment?: Segment } | null;
+  const [segment, setSegment] = useState<Segment>(navState?.segment ?? 'zarflar');
 
   return (
     <div className="space-y-4">
@@ -16,6 +22,7 @@ export function BudgetsScreen() {
           [
             ['zarflar', tr.budgets.envelopes],
             ['sabitler', tr.budgets.recurring],
+            ['kumbara', tr.kumbara.title],
           ] as const
         ).map(([key, label]) => (
           <button
@@ -34,7 +41,9 @@ export function BudgetsScreen() {
         ))}
       </div>
 
-      {segment === 'zarflar' ? <EnvelopesSegment /> : <RecurringSegment />}
+      {segment === 'zarflar' && <EnvelopesSegment />}
+      {segment === 'sabitler' && <RecurringSegment />}
+      {segment === 'kumbara' && <KumbaraSegment />}
     </div>
   );
 }

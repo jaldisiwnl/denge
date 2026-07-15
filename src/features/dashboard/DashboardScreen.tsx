@@ -5,10 +5,13 @@ import { StreakCard } from './StreakCard';
 import { DonutCard } from './DonutCard';
 import { TrendCard } from './TrendCard';
 import { HeatmapCard } from './HeatmapCard';
+import { KumbaraCard } from './KumbaraCard';
 import { PendingRecurringCards } from './PendingRecurringCards';
 import { LapseCard } from '../recovery/LapseCard';
+import { ReviewBadgeCard } from '../review/ReviewBadgeCard';
+import { CooldownBadgeCard } from '../cooldown/CooldownBadgeCard';
 
-// Card order per §9.7. Kumbara card joins in P5.
+// Card order per §9.7.
 export function DashboardScreen() {
   return (
     <div className="space-y-4">
@@ -27,9 +30,12 @@ export function DashboardScreen() {
       </header>
 
       <HeroCard />
-      {/* Pending cards (§9.7.2): lapse recovery always first */}
+      {/* Pending cards (§9.7.2): lapse first, then review, cooldowns, fixed */}
       <LapseCard />
+      <ReviewBadgeCard />
+      <CooldownBadgeCard />
       <PendingRecurringCards />
+      <KumbaraCard />
       <StreakCard />
       <DonutCard />
       <TrendCard />
