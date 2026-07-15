@@ -259,3 +259,12 @@ Mühendis + kullanıcı şapkalı son tur:
 
 # 🏁 v1.1 spec'inin tüm fazları (P0–P7) tamamlandı.
 Parking lot (v2, §19) dışında açık iş yok. İyi birikimler! 🏦
+
+---
+
+## v1.2 — Masaüstü düzeni, haftalık durum, harçlık modeli (2026-07-15)
+Sahibin talebiyle spec sonrası kapsam:
+- **Masaüstü kabuğu (lg ≥1024px):** sol kenar çubuğu (marka + "İşlem ekle" + gezinme), geniş içerik (max-w-5xl); Özet kartları 2/3 kolonlu ızgarada (hero ve uyarı kartları tam genişlik), İçgörü kartları masonry kolonlarında, zarflar ve kumbara hedefleri 2 kolon, sheet'ler daha geniş. **Telefon düzeni aynen korunur** — alt bar + FAB yalnız mobilde, kenar çubuğu yalnız masaüstünde.
+- **"Bu hafta" kartı:** Pzt→bugün harcanan + gelen (harçlık buraya düşer), gerekli/istek/boş şeridi, geçen haftanın aynı dönemiyle %kıyas, günlük ortalama.
+- **Maaş çerçevesi kaldırıldı:** "Maaş günü" → "Bütçe ayının başlangıç günü" (düzensiz gelir için 1 önerilir), "Aylık net gelir" → "Aylık ortalama gelir (isteğe bağlı)"; onboarding metinleri düzensiz gelire göre; varsayılan gelir kategorisi Harçlık 💵 (mevcut veritabanında Ayarlar → Kategoriler'den yeniden adlandırılabilir). Demo artık haftalık düzensiz harçlığı otomatik-olmayan haftalık kuralla modelliyor (her hafta "Onayla | Atla" kartı) ve öğrenci ölçekli tutarlarla üretiliyor.
+- Mali ay altyapısı (zarflar/karne/kapanış) aynen duruyor — yalnız maaş varsayımı gitti.
