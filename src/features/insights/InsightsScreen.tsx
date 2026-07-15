@@ -110,6 +110,8 @@ export function InsightsScreen() {
         </button>
       </div>
 
+      {/* Desktop: masonry columns; mobile: single stacked column. */}
+      <div className="space-y-4 lg:columns-2 lg:gap-4 lg:space-y-0 xl:columns-3">
       {!anyCard && <p className="text-base text-ink-soft">{tr.insights.empty}</p>}
 
       {/* 1 — Dürtü Endeksi dial + sparkline */}
@@ -117,7 +119,7 @@ export function InsightsScreen() {
 
       {/* 2 — Birikim çizgisi (12-month cumulative) */}
       {data.savings && data.savings.points.some((p) => p.cumulativeMinor > 0) && (
-        <section className="rounded-card border border-grid bg-card p-4" aria-label={tr.insights.savingsLineTitle}>
+        <section className="rounded-card border border-grid bg-card p-4 lg:mb-4 lg:break-inside-avoid" aria-label={tr.insights.savingsLineTitle}>
           <h2 className="text-xs font-medium uppercase tracking-wide text-ink-soft">
             {tr.insights.savingsLineTitle}
           </h2>
@@ -157,7 +159,7 @@ export function InsightsScreen() {
 
       {/* 3 — Boş oranı trendi */}
       {data.bosTrend.some((m) => m.bosRate !== null && m.bosRate > 0) && (
-        <section className="rounded-card border border-grid bg-card p-4" aria-label={tr.insights.bosTrendTitle}>
+        <section className="rounded-card border border-grid bg-card p-4 lg:mb-4 lg:break-inside-avoid" aria-label={tr.insights.bosTrendTitle}>
           <h2 className="text-xs font-medium uppercase tracking-wide text-ink-soft">
             {tr.insights.bosTrendTitle}
           </h2>
@@ -241,7 +243,7 @@ export function InsightsScreen() {
 
       {/* 6 — Haftanın günleri */}
       {data.weekday && (
-        <section className="rounded-card border border-grid bg-card p-4" aria-label={tr.insights.weekdayTitle}>
+        <section className="rounded-card border border-grid bg-card p-4 lg:mb-4 lg:break-inside-avoid" aria-label={tr.insights.weekdayTitle}>
           <h2 className="text-xs font-medium uppercase tracking-wide text-ink-soft">
             {tr.insights.weekdayTitle}
           </h2>
@@ -363,10 +365,11 @@ export function InsightsScreen() {
       <button
         type="button"
         onClick={() => setHistoryOpen(true)}
-        className="text-base font-medium text-ballpoint"
+        className="text-base font-medium text-ballpoint lg:mb-4 lg:break-inside-avoid"
       >
         {tr.insights.reviewHistoryTitle} ›
       </button>
+      </div>
 
       {historyOpen && (
         <ReviewHistorySheet
@@ -380,7 +383,10 @@ export function InsightsScreen() {
 
 function Card(props: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-card border border-grid bg-card p-4" aria-label={props.title}>
+    <section
+      className="rounded-card border border-grid bg-card p-4 lg:mb-4 lg:break-inside-avoid"
+      aria-label={props.title}
+    >
       <h2 className="text-xs font-medium uppercase tracking-wide text-ink-soft">
         {props.title}
       </h2>
@@ -399,7 +405,7 @@ function DurtuCard(props: {
     band === 'sakin' ? 'var(--green)' : band === 'dalgali' ? 'var(--ballpoint)' : 'var(--redpen)';
 
   return (
-    <section className="rounded-card border border-grid bg-card p-4" aria-label={tr.insights.durtuTitle}>
+    <section className="rounded-card border border-grid bg-card p-4 lg:mb-4 lg:break-inside-avoid" aria-label={tr.insights.durtuTitle}>
       <h2 className="text-xs font-medium uppercase tracking-wide text-ink-soft">
         {tr.insights.durtuTitle}
       </h2>

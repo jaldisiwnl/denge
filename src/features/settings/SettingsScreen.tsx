@@ -111,7 +111,7 @@ export function SettingsScreen() {
     'flex min-h-11 w-full items-center justify-between px-4 py-3 text-left text-base';
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 lg:max-w-2xl">
       <h1 className="font-display text-2xl font-semibold">
         {tr.settings.title}
       </h1>

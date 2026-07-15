@@ -44,8 +44,8 @@ export function Sheet(props: {
         role="dialog"
         aria-modal="true"
         tabIndex={-1}
-        className={`absolute inset-x-0 bottom-0 mx-auto flex max-w-md flex-col rounded-t-sheet bg-card shadow-overlay outline-none animate-sheet-up ${
-          props.full ? 'top-4' : 'max-h-[90dvh]'
+        className={`absolute inset-x-0 bottom-0 mx-auto flex max-w-md flex-col rounded-t-sheet bg-card shadow-overlay outline-none animate-sheet-up lg:max-w-xl ${
+          props.full ? 'top-4 lg:top-10' : 'max-h-[90dvh]'
         }`}
       >
         <div className="flex justify-center pb-1 pt-2">

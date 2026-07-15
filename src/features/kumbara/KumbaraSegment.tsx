@@ -44,15 +44,17 @@ export function KumbaraSegment() {
 
   return (
     <div className="space-y-3">
-      {data.goals.map((goal) => (
-        <GoalCard
-          key={goal.id}
-          goal={goal}
-          savedMinor={data.totals.get(goal.id) ?? 0}
-          projection={data.projections.get(goal.id) ?? null}
-          onOpen={() => setDetail(goal)}
-        />
-      ))}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        {data.goals.map((goal) => (
+          <GoalCard
+            key={goal.id}
+            goal={goal}
+            savedMinor={data.totals.get(goal.id) ?? 0}
+            projection={data.projections.get(goal.id) ?? null}
+            onOpen={() => setDetail(goal)}
+          />
+        ))}
+      </div>
 
       <button
         type="button"
