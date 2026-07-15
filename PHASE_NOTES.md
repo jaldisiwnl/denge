@@ -144,4 +144,15 @@ Onay öncesi mühendis/finansçı/değerlendirmeci gözden geçirmesinde bulunan
 2. **5 günlük boşluk (AC):** DevTools → IndexedDB → transactions'ta en son manuel işlemin tarihini 6 gün öncesine çek (ya da 6 gün önceye tarihli tek işlem bırak), sayfayı yenile → "X gündür yazmadın…" kartı gelmeli, seri kartı ⏸ göstermeli. `Boşluğu doldur` → her gün için Kısayol/mini form/"Harcama yoktu" seç; bitince kart kapanmalı, "Harcama yoktu" dediğin günler seriyi geri büyütmeli, doldurulan günler ısı haritasında soluk görünmeli.
 3. **Boş ver yolu:** kartı tekrar tetikleyip `Boş ver, bugünden devam` de → kart kaybolur, quick-add bugüne açılır; seri, boşluk öncesi değerinden devam eder (boşluk günleri sayılmaz ama seri sıfırlanmaz).
 
+---
+
+## P3/P4 gözden geçirme düzeltmeleri (2026-07-15)
+Finansçı + kullanıcı şapkalı gözden geçirme sonrası:
+- **Boşluk kapatması artık aralık kapsaması:** kısmi geri doldurma boşluğu böldüğünde kalan parçalar, kapatılmış aralığın içindeyse çözülmüş sayılıyor — kart, akış biter bitmez geri gelmiyor. Sessizlik kapatılan aralığın ötesine uzarsa kart haklı olarak geri döner (ikisi de testli).
+- **Duraklatılan sabit kural yeniden açılınca geçmişi doldurmuyor:** pasif→aktif geçişinde `lastPostedDate` düne çekiliyor; üyelik duraklatıp açan kullanıcı aylarca hayalet gider görmüyor.
+- **Donut'ta grafik içi benzersiz renk garantisi** (P1 değerlendirmesinde verilen söz): palet sarmalarında çakışan dilim, kullanılmayan palet rengine atanıyor.
+- **Gelir verisi hiç yokken zarflar bütçe tavanı sayılıyor** (belgeli §0.7 sapması): `min(0, zarflar) = 0` yüzünden anlamsız negatif `Kalan` gösterilmiyor; gelir girilince spec formülü aynen devreye giriyor (testli).
+- **Tutarlılık:** ay gezgini tek-gün filtresini temizliyor; eğilim ve ısı haritası toplamları ileri tarihli işlemleri donut gibi hariç tutuyor.
+- **P7'ye notlar:** arşivli kategorili kural/şablon düzenlemede select'in yanıltıcı görünümü; ısı haritası hücrelerine klavye erişimi; Recharts kaynaklı bundle büyümesi (code-splitting).
+
 **DURDUM — P5 (Bilinç suite & Kumbara) için onayını bekliyorum.**
