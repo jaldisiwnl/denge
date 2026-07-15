@@ -10,6 +10,7 @@ import { PendingRecurringCards } from './PendingRecurringCards';
 import { LapseCard } from '../recovery/LapseCard';
 import { ReviewBadgeCard } from '../review/ReviewBadgeCard';
 import { CooldownBadgeCard } from '../cooldown/CooldownBadgeCard';
+import { CloseCard } from '../close/CloseCard';
 
 // Card order per §9.7.
 export function DashboardScreen() {
@@ -35,6 +36,7 @@ export function DashboardScreen() {
       <ReviewBadgeCard />
       <CooldownBadgeCard />
       <PendingRecurringCards />
+      <CloseCard />
       <KumbaraCard />
       <StreakCard />
       <DonutCard />
