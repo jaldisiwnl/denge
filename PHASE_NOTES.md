@@ -116,4 +116,32 @@ Onay öncesi mühendis/finansçı/değerlendirmeci gözden geçirmesinde bulunan
 2. **İdempotent otomatik kayıt:** Sabitler'den bugün günlü aylık bir kural ekle (Otomatik yaz açık) → kaydedince işlem listesinde belirmeli. Sayfayı 2–3 kez yenile, sekmeden çıkıp geri gel → **kopya oluşmamalı**. DevTools'ta kuralın `lastPostedDate`i bugün olmalı.
 3. **Bekleyen onay:** "Otomatik yaz" kapalı bir kural ekle (günü bugün ya da geçmiş) → Özet'te "Bekleyen sabitler" kartı çıkmalı. Onayla → işlem yazılır, kart kaybolur (ya da sıradaki oluşum gelir). "Bu ay atla" → işlem yazılmadan kart kapanır.
 
-**DURDUM — P4 (Dashboard & recovery) için onayını bekliyorum.**
+**DURDUM — P4 (Dashboard & recovery) için onayını bekliyorum.** ✅ Onaylandı.
+
+---
+
+## P4 — Dashboard & recovery (2026-07-15)
+
+### Ne yapıldı
+- **Hero (§8.3 + §9.7.1):** birikim-farkındalıklı safe-to-spend — gelir (yoksa ayarlardaki net gelir), zarf toplamı tavanı, sabit giderler (yazılan + ay içinde kalan), değişken harcama ve kumbara mevduatı düşülür; `Kalan` 600ms count-up ile, altında `Güne düşen`, ince tempo çubuğu (dolgu = harcama oranı, çentik = geçen zaman oranı; harcama zamanın önündeyse kırmızı). Negatif kalan kırmızı kalem halkasında.
+- **Grafikler (§9.7.5-7):** kategori donut'u (ilk 6 + Diğer, ortada toplam, dilime dokun → filtreli liste) + erişilebilir eş liste; 6 aylık eğilim çubukları (boş payı kırmızı katman); özel SVG ısı haritası (5 kademeli tükenmez yoğunluğu, boş içeren günlerde kırmızı köşe, geri doldurulan günler %60 opaklık, güne dokun → o günün listesi).
+- **Seri kartı (§8.5):** 🔥 güncel + en iyi seri; lapse varken `⏸ Seri duraklatıldı…`; 3/7/14/30 kilometre taşlarında fosforlu süpürme animasyonlu toast (her seri başlangıcı için bir kez, uiFlags ile).
+- **Boşluk affı (§8.8 + §9.15):** `findGaps/detectLapse` saf fonksiyonları (≥3 gün, otomatik kayıtlar aktivite sayılmaz, kısmi doldurma boşluğu küçültür); sıcak kart her zaman diğer bekleyenlerin üstünde, kırmızısız. `Boşluğu doldur` → gün gün stepper (Kısayol çipleri + mini form + "Harcama yoktu" + "Hatırlamıyorum", son 14 günle sınırlı §17); `Boş ver` → kart kapanır, quick-add bugüne açılır, seri matematiği bozulmaz.
+- 61 test yeşil (lapse 10, streak 6, safe-to-spend 6 yeni); Dexie v3 (`uiFlags`); Recharts eklendi.
+
+### Teknik kararlar (ve nedenleri)
+1. **Spec'in §8.3 formülünde düzeltme (belgeli):** formül yalnızca `fixedRemaining` düşüyor ama `spentVariable` otomatik yazılanları dışlıyor — kural yazıldığı an `available` sıçrardı. Yazılan + kalan sabitlerin ikisini de düşüyorum; sayı ay boyunca kararlı ve liste toplamlarıyla mutabık (testle sabitlendi).
+2. **`uiFlags` Dexie v3 store'u (spec §8.8'in açıkça izin verdiği seçenek):** temiz gün işaretleri (`cleanDay:`), kapatılan boşluklar (`gapDismissed:`) ve kutlanan kilometre taşları (`streakCelebrated:`) — §7 veri modelini kirletmeden, dışa aktarımın dışında kalabilecek hafif bayraklar.
+3. **Duraklatma kümesi tüm boşluklardan türetiliyor** (kapatılanlar dahil): yalnızca gerçek veri (geri doldurma / temiz gün işareti) günü aktiviteye çevirip duraklamayı kaldırır — spec'in "only actual backfilled data un-pauses" kuralı, ayrı bir durum makinesi olmadan kümeler üzerinden kendiliğinden sağlanıyor.
+4. **Grafik renkleri CSS class üzerinden** (`--ballpoint`/`--redpen` değişkenleri): SVG öznitelikleri `var()` çözmediği için Recharts elemanlarına class verildi — tema değişince grafikler de anında döner.
+
+### Belirsizlik notları (§0.7)
+- Stepper'daki mini form gider-odaklı (boşluktaki maaş vb. zaten yineleme motorunca yazılıyor).
+- Bundle Recharts ile 828 KB'a çıktı (gzip 243 KB) — P7'de code-splitting/manualChunks planlandı.
+
+### Elle doğrulama (tarayıcıda)
+1. **Mutabakat:** Özet'teki donut toplamı ve gün karesine dokununca açılan liste, İşlemler sekmesindeki aynı ayın toplamlarıyla birebir tutmalı. Hero'daki `Kalan`, gelir − sabitler − harcama − kumbara hesabına uymalı (zarf varsa tavan).
+2. **5 günlük boşluk (AC):** DevTools → IndexedDB → transactions'ta en son manuel işlemin tarihini 6 gün öncesine çek (ya da 6 gün önceye tarihli tek işlem bırak), sayfayı yenile → "X gündür yazmadın…" kartı gelmeli, seri kartı ⏸ göstermeli. `Boşluğu doldur` → her gün için Kısayol/mini form/"Harcama yoktu" seç; bitince kart kapanmalı, "Harcama yoktu" dediğin günler seriyi geri büyütmeli, doldurulan günler ısı haritasında soluk görünmeli.
+3. **Boş ver yolu:** kartı tekrar tetikleyip `Boş ver, bugünden devam` de → kart kaybolur, quick-add bugüne açılır; seri, boşluk öncesi değerinden devam eder (boşluk günleri sayılmaz ama seri sıfırlanmaz).
+
+**DURDUM — P5 (Bilinç suite & Kumbara) için onayını bekliyorum.**
