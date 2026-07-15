@@ -45,6 +45,21 @@ describe('computeSafeToSpend', () => {
     expect(computeSafeToSpend(base).budgetTotalMinor).toBe(5000000);
   });
 
+  it('uses envelope totals when no income data exists at all', () => {
+    const r = computeSafeToSpend({
+      ...base,
+      incomeMinor: 0,
+      fallbackIncomeMinor: 0,
+      envelopeTotalMinor: 3000000,
+    });
+    expect(r.budgetTotalMinor).toBe(3000000);
+    // without envelopes there is still nothing to spend from
+    expect(
+      computeSafeToSpend({ ...base, incomeMinor: 0, fallbackIncomeMinor: 0 })
+        .budgetTotalMinor,
+    ).toBe(0);
+  });
+
   it('kumbara deposits shrink the pool; withdrawals never grow it', () => {
     expect(
       computeSafeToSpend({ ...base, savedNetMinor: 1000000 }).availableMinor,

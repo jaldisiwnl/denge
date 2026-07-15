@@ -38,9 +38,15 @@ export interface SafeToSpend {
 export function computeSafeToSpend(input: SafeToSpendInput): SafeToSpend {
   const income =
     input.incomeMinor > 0 ? input.incomeMinor : input.fallbackIncomeMinor;
+  // With zero income data, min(0, envelopes) would floor the budget at 0 and
+  // show a meaninglessly negative "Kalan". When envelopes exist they are the
+  // best available budget estimate — use them until income is known
+  // (documented §0.7 deviation, P3/P4 review fix).
   const budgetTotalMinor =
     input.envelopeTotalMinor !== null
-      ? Math.min(income, input.envelopeTotalMinor)
+      ? income > 0
+        ? Math.min(income, input.envelopeTotalMinor)
+        : input.envelopeTotalMinor
       : income;
   // Kumbara deposits are gone from the spending pool by design (§8.3).
   const saved = Math.max(0, input.savedNetMinor);
