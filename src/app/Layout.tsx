@@ -13,8 +13,9 @@ import { useEphemeralStore } from './ui';
 export function Layout() {
   const settings = useLiveQuery(getSettings);
   const quickAddOpen = useEphemeralStore((s) => s.quickAddOpen);
-  // Keying by the edited id remounts the sheet with fresh state per session.
+  // Keying by session identity remounts the sheet with fresh state.
   const editingId = useEphemeralStore((s) => s.editTransaction?.id);
+  const wishlistId = useEphemeralStore((s) => s.wishlistPurchase?.id);
 
   // On app open and window focus (§6): post due recurring transactions.
   // Idempotent by design (§8.7), so firing often is harmless.
@@ -44,7 +45,7 @@ export function Layout() {
         <Outlet />
       </main>
       <TabBar />
-      {quickAddOpen && <QuickAddSheet key={editingId ?? 'new'} />}
+      {quickAddOpen && <QuickAddSheet key={editingId ?? wishlistId ?? 'new'} />}
       <Toast />
     </div>
   );
