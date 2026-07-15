@@ -71,6 +71,39 @@
   animation: sheet-up 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+/* Highlighter sweep for milestone toasts (§11.6). */
+@keyframes highlight-sweep {
+  from {
+    background-size: 0% 100%;
+  }
+  to {
+    background-size: 100% 100%;
+  }
+}
+
+.toast-highlight {
+  background-color: var(--card);
+  background-image: linear-gradient(var(--highlight), var(--highlight));
+  background-repeat: no-repeat;
+  animation: highlight-sweep 600ms ease-out forwards;
+}
+
+/* Recharts theming: axis/label text follows the ink tokens. */
+.recharts-cartesian-axis-tick text {
+  fill: var(--ink-soft);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 11px;
+}
+
+.chart-bar-rest {
+  fill: var(--ballpoint);
+  opacity: 0.8;
+}
+
+.chart-bar-bos {
+  fill: var(--redpen);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
