@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { tr } from '../../i18n/tr';
 import { useUiStore, type ThemePreference } from '../../app/theme';
 import { updateSettings } from '../../db/repo/settings';
@@ -47,6 +48,27 @@ export function SettingsScreen() {
             </button>
           ))}
         </div>
+      </section>
+
+      <section className="divide-y divide-grid rounded-card border border-grid bg-card">
+        <Link
+          to="/ayarlar/kategoriler"
+          className="flex min-h-11 items-center justify-between px-4 py-3 text-base"
+        >
+          {tr.settings.categories}
+          <span className="text-ink-soft" aria-hidden>
+            ›
+          </span>
+        </Link>
+        <Link
+          to="/ayarlar/kisayollar"
+          className="flex min-h-11 items-center justify-between px-4 py-3 text-base"
+        >
+          {tr.settings.templates}
+          <span className="text-ink-soft" aria-hidden>
+            ›
+          </span>
+        </Link>
       </section>
     </div>
   );
