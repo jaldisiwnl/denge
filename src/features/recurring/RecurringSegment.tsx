@@ -8,7 +8,7 @@ import { ti } from '../../i18n/interpolate';
 import { formatMinor, minorToInput, parseAmountMinor } from '../../lib/money';
 import { annualizedMinor, monthlyizedMinor, nextDueDate } from '../../lib/recurrence';
 import { addDaysISO, parseLocalDate, todayISO } from '../../lib/dates';
-import { listCategories } from '../../db/repo/categories';
+import { listAllCategories, listCategories } from '../../db/repo/categories';
 import {
   addRule,
   deleteRule,
@@ -185,7 +185,15 @@ function RuleSheet(props: { editing?: RecurringRule; onClose: () => void }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [error, setError] = useState<string>();
 
-  const categories = useLiveQuery(() => listCategories(type), [type]);
+  // Include the edited rule's category even when archived, so the select
+  // shows what will actually be saved (P7 fix).
+  const categories = useLiveQuery(async () => {
+    const all = await listAllCategories();
+    return all.filter(
+      (c) =>
+        c.kind === type && (!c.isArchived || c.id === editing?.categoryId),
+    );
+  }, [type, editing?.categoryId]);
 
   async function save() {
     if (!name.trim()) {
@@ -274,6 +282,7 @@ function RuleSheet(props: { editing?: RecurringRule; onClose: () => void }) {
           {(categories ?? []).map((c) => (
             <option key={c.id} value={c.id}>
               {c.emoji} {c.name}
+              {c.isArchived ? ` ${tr.categories.archivedSuffix}` : ''}
             </option>
           ))}
         </select>

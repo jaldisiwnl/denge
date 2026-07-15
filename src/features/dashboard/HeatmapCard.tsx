@@ -61,15 +61,28 @@ export function HeatmapCard() {
           const x = d.col * STEP;
           const y = d.row * STEP;
           const step = intensity(d.spentMinor, data.maxSpentMinor);
+          const open = () =>
+            !d.isFuture && navigate('/islemler', { state: { date: d.date } });
           return (
             <g
               key={d.date}
               // Backfilled-lapse days render at 60% opacity (§9.7.7)
               opacity={d.isFuture ? 0.35 : d.isBackfilled ? 0.6 : 1}
-              onClick={() =>
-                !d.isFuture && navigate('/islemler', { state: { date: d.date } })
-              }
-              className={d.isFuture ? '' : 'cursor-pointer'}
+              onClick={open}
+              // keyboard access (P7 a11y): Enter/Space opens the day
+              role={d.isFuture ? undefined : 'button'}
+              tabIndex={d.isFuture ? undefined : 0}
+              aria-label={ti(tr.dashboard.heatmapDayAria, {
+                date: d.date,
+                amount: formatMinor(d.spentMinor),
+              })}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  open();
+                }
+              }}
+              className={d.isFuture ? '' : 'heatmap-cell cursor-pointer'}
             >
               <rect
                 x={x}

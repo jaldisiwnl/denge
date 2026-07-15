@@ -104,6 +104,16 @@
   fill: var(--redpen);
 }
 
+/* Visible focus for keyboard-navigated heatmap cells (P7 a11y). */
+.heatmap-cell:focus-visible {
+  outline: none;
+}
+
+.heatmap-cell:focus-visible rect {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

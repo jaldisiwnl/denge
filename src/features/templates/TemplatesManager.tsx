@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Sheet } from '../../components/Sheet';
 import { tr } from '../../i18n/tr';
 import { formatMinor, minorToInput, parseAmountMinor } from '../../lib/money';
-import { listCategories } from '../../db/repo/categories';
+import { listAllCategories } from '../../db/repo/categories';
 import {
   addTemplate,
   deleteTemplate,
@@ -127,7 +127,16 @@ function TemplateSheet(props: {
   onClose: () => void;
 }) {
   const { editing } = props;
-  const categories = useLiveQuery(() => listCategories('expense'));
+  // Include the edited template's category even when archived, so the select
+  // shows what will actually be saved (P7 fix).
+  const categories = useLiveQuery(async () => {
+    const all = await listAllCategories();
+    return all.filter(
+      (c) =>
+        c.kind === 'expense' &&
+        (!c.isArchived || c.id === editing?.categoryId),
+    );
+  }, [editing?.categoryId]);
 
   const [name, setName] = useState(editing?.name ?? '');
   const [emoji, setEmoji] = useState(editing?.emoji ?? '');
@@ -211,6 +220,7 @@ function TemplateSheet(props: {
           {(categories ?? []).map((c) => (
             <option key={c.id} value={c.id}>
               {c.emoji} {c.name}
+              {c.isArchived ? ` ${tr.categories.archivedSuffix}` : ''}
             </option>
           ))}
         </select>
