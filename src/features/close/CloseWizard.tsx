@@ -10,6 +10,7 @@ import { ti } from '../../i18n/interpolate';
 import { useEphemeralStore } from '../../app/ui';
 import { formatMinor, minorToInput, parseAmountMinor } from '../../lib/money';
 import { parseLocalDate } from '../../lib/dates';
+import { shiftMonthKey } from '../../lib/fiscal';
 import type { MonthKey } from '../../lib/types';
 import { buildCloseContext, saveClose, type CloseContext } from '../../db/repo/close';
 import { listAllCategories } from '../../db/repo/categories';
@@ -150,7 +151,6 @@ export function CloseWizard(props: { monthKey: MonthKey; onClose: () => void }) 
         {step === 5 && (
           <NextMonthStep
             monthKey={props.monthKey}
-            categories={data.categories}
             wasteLimit={wasteLimit}
             onWasteLimit={setWasteLimit}
           />
@@ -307,7 +307,6 @@ function SavingsStep(props: {
 /** Step 5 (§9.12.5): envelope suggestions + optional waste-limit challenge. */
 function NextMonthStep(props: {
   monthKey: MonthKey;
-  categories: Category[] | Map<string, Category>;
   wasteLimit: string;
   onWasteLimit: (v: string) => void;
 }) {
@@ -321,7 +320,13 @@ function NextMonthStep(props: {
     for (const c of cats) {
       const [budget, suggestion] = await Promise.all([
         getBudget(c.id),
-        suggestForCategory(c.id, props.monthKey, settings.monthStartDay),
+        // Suggestions are FOR next month, so the median window must include
+        // the month being closed (reference month = closed + 1).
+        suggestForCategory(
+          c.id,
+          shiftMonthKey(props.monthKey, 1),
+          settings.monthStartDay,
+        ),
       ]);
       if (budget || suggestion) {
         rows.push({
