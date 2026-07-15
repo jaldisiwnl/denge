@@ -1,12 +1,247 @@
+import { useMemo, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { format } from 'date-fns';
+import { tr as trLocale } from 'date-fns/locale';
 import { tr } from '../../i18n/tr';
+import { useEphemeralStore } from '../../app/ui';
+import { formatMinor } from '../../lib/money';
+import { getMonthKey, shiftMonthKey } from '../../lib/fiscal';
+import { todayISO, daysAgoISO } from '../../lib/dates';
+import { getSettings } from '../../db/repo/settings';
+import { listAllCategories } from '../../db/repo/categories';
+import { listMonthTransactions } from '../../db/repo/transactions';
+import type { Category, Necessity, Transaction } from '../../db/types';
+
+const NECESSITY_DOT: Record<Necessity, string> = {
+  gerekli: 'bg-green',
+  istek: 'bg-ballpoint',
+  bos: 'bg-redpen',
+};
+
+function parseLocalDay(date: string): Date {
+  const [y, m, d] = date.split('-').map(Number);
+  return new Date(y!, m! - 1, d!);
+}
+
+function dayHeader(date: string): string {
+  if (date === todayISO()) return tr.list.today;
+  if (date === daysAgoISO(1)) return tr.list.yesterday;
+  return format(parseLocalDay(date), 'd MMMM EEEE', { locale: trLocale });
+}
 
 export function TransactionsScreen() {
+  const settings = useLiveQuery(getSettings);
+  const startDay = settings?.monthStartDay ?? 1;
+  const currentKey = getMonthKey(todayISO(), startDay);
+
+  const [monthOverride, setMonthOverride] = useState<string>();
+  const monthKey = monthOverride ?? currentKey;
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [necessityFilter, setNecessityFilter] = useState<'all' | Necessity>('all');
+  const [search, setSearch] = useState('');
+
+  const categories = useLiveQuery(listAllCategories);
+  const transactions = useLiveQuery(
+    () => listMonthTransactions(monthKey, startDay),
+    [monthKey, startDay],
+  );
+
+  const categoryById = useMemo(
+    () => new Map((categories ?? []).map((c) => [c.id, c])),
+    [categories],
+  );
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLocaleLowerCase('tr');
+    return (transactions ?? [])
+      .filter((t) => categoryFilter === 'all' || t.categoryId === categoryFilter)
+      .filter((t) => necessityFilter === 'all' || t.necessity === necessityFilter)
+      .filter(
+        (t) =>
+          !q ||
+          (t.note ?? '').toLocaleLowerCase('tr').includes(q) ||
+          (t.merchant ?? '').toLocaleLowerCase('tr').includes(q),
+      )
+      .sort(
+        (a, b) =>
+          b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt),
+      );
+  }, [transactions, categoryFilter, necessityFilter, search]);
+
+  // Group by day, preserving the date-desc order.
+  const groups = useMemo(() => {
+    const map = new Map<string, Transaction[]>();
+    for (const t of filtered) {
+      const list = map.get(t.date);
+      if (list) list.push(t);
+      else map.set(t.date, [t]);
+    }
+    return [...map.entries()];
+  }, [filtered]);
+
+  const monthLabel = format(parseLocalDay(`${monthKey}-01`), 'LLLL yyyy', {
+    locale: trLocale,
+  });
+  const hasAnyThisMonth = (transactions?.length ?? 0) > 0;
+  const filtersActive =
+    categoryFilter !== 'all' || necessityFilter !== 'all' || search.trim() !== '';
+
   return (
-    <div className="space-y-4">
-      <h1 className="font-display text-2xl font-semibold">
-        {tr.tabs.islemler}
-      </h1>
-      <p className="text-base text-ink-soft">{tr.common.comingSoon}</p>
+    <div>
+      <h1 className="font-display text-2xl font-semibold">{tr.tabs.islemler}</h1>
+
+      {/* Sticky filter bar (§9.3): fiscal month, category, necessity, search */}
+      <div className="sticky top-0 z-10 -mx-4 mt-2 space-y-2 bg-paper px-4 py-2">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            aria-label={tr.list.prevMonth}
+            onClick={() => setMonthOverride(shiftMonthKey(monthKey, -1))}
+            className="flex h-11 w-11 items-center justify-center rounded-full text-ink-soft"
+          >
+            ‹
+          </button>
+          <span className="text-md font-medium">{monthLabel}</span>
+          <button
+            type="button"
+            aria-label={tr.list.nextMonth}
+            onClick={() => setMonthOverride(shiftMonthKey(monthKey, 1))}
+            className="flex h-11 w-11 items-center justify-center rounded-full text-ink-soft"
+          >
+            ›
+          </button>
+        </div>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={tr.list.searchPlaceholder}
+          className="w-full rounded-full border border-grid bg-card px-4 py-2 text-base outline-none placeholder:text-ink-soft/50"
+        />
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            aria-label={tr.list.categoryFilter}
+            className="shrink-0 rounded-full border border-grid bg-card px-3 py-1.5 text-base text-ink outline-none"
+          >
+            <option value="all">{tr.common.all}</option>
+            {(categories ?? [])
+              .filter((c) => !c.isArchived)
+              .map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.emoji} {c.name}
+                </option>
+              ))}
+          </select>
+          {(['all', 'gerekli', 'istek', 'bos'] as const).map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setNecessityFilter(n)}
+              aria-pressed={necessityFilter === n}
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-base ${
+                necessityFilter === n
+                  ? 'border-ballpoint bg-ballpoint/15 font-medium text-ballpoint'
+                  : 'border-grid text-ink-soft'
+              }`}
+            >
+              {n === 'all' ? tr.common.all : tr.necessity[n]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {groups.length === 0 && (
+        <p className="mt-8 text-center text-base text-ink-soft">
+          {hasAnyThisMonth && filtersActive ? tr.list.noResults : tr.list.empty}
+        </p>
+      )}
+
+      <div className="mt-2 space-y-4">
+        {groups.map(([date, txns]) => (
+          <DayGroup
+            key={date}
+            date={date}
+            transactions={txns}
+            categoryById={categoryById}
+          />
+        ))}
+      </div>
     </div>
+  );
+}
+
+function DayGroup(props: {
+  date: string;
+  transactions: Transaction[];
+  categoryById: Map<string, Category>;
+}) {
+  // Day subtotal = income − expenses of the day (right-aligned mono, §9.3).
+  const net = props.transactions.reduce(
+    (sum, t) => sum + (t.type === 'income' ? t.amountMinor : -t.amountMinor),
+    0,
+  );
+  return (
+    <section>
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-xs font-medium uppercase tracking-wide text-ink-soft">
+          {dayHeader(props.date)}
+        </h2>
+        <span className="font-mono text-xs text-ink-soft">{formatMinor(net)}</span>
+      </div>
+      <div className="mt-1.5 divide-y divide-grid rounded-card border border-grid bg-card">
+        {props.transactions.map((t) => (
+          <TransactionRow
+            key={t.id}
+            transaction={t}
+            category={props.categoryById.get(t.categoryId)}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function TransactionRow(props: {
+  transaction: Transaction;
+  category?: Category;
+}) {
+  const openEdit = useEphemeralStore((s) => s.openEdit);
+  const t = props.transaction;
+  const label = t.merchant || t.note || props.category?.name || '—';
+  return (
+    <button
+      type="button"
+      onClick={() => openEdit(t)}
+      className="flex min-h-11 w-full items-center gap-3 px-3 py-2.5 text-left"
+    >
+      <span className="text-md" aria-hidden>
+        {props.category?.emoji ?? '❔'}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-1.5">
+          <span className="truncate text-base text-ink">{label}</span>
+          {t.necessity && (
+            <span
+              className={`h-2 w-2 shrink-0 rounded-full ${NECESSITY_DOT[t.necessity]}`}
+              role="img"
+              aria-label={tr.necessity[t.necessity]}
+            />
+          )}
+        </span>
+        {t.note && t.merchant && (
+          <span className="block truncate text-xs text-ink-soft">{t.note}</span>
+        )}
+      </span>
+      {/* pisman amounts get a strike (simple decoration until <RedPen> in P4, §11.5) */}
+      <span
+        className={`font-mono text-base ${
+          t.type === 'income' ? 'text-green' : 'text-ink'
+        } ${t.regret === 'pisman' ? 'line-through decoration-redpen decoration-2' : ''}`}
+      >
+        {t.type === 'income' ? '+' : ''}
+        {formatMinor(t.amountMinor)}
+      </span>
+    </button>
   );
 }
