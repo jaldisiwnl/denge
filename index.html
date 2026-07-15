@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="tr" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Denge</title>
+    <meta name="description" content="Paranla aranı düzelt." />
+    <!-- theme-color follows --paper per scheme (§13) -->
+    <meta name="theme-color" content="#FAF9F4" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0F1524" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <script>
+      // Resolve the persisted theme before first paint to avoid a light-mode
+      // flash when the user prefers dark. Must stay in sync with the Zustand
+      // persist key in src/app/theme.ts.
+      (function () {
+        var theme = 'system';
+        try {
+          var raw = localStorage.getItem('denge-ui');
+          if (raw) theme = JSON.parse(raw).state.theme || 'system';
+        } catch (e) {}
+        var dark =
+          theme === 'dark' ||
+          (theme === 'system' &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
