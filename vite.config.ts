@@ -3,7 +3,14 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// GitHub Pages serves the app from /denge/ — CI sets DEPLOY_BASE; local
+// dev/preview stay at root. Router basename and PWA scope follow this.
+// (Minimal ambient decl instead of @types/node — the dep list stays closed.)
+declare const process: { env: Record<string, string | undefined> };
+const base = process.env.DEPLOY_BASE ?? '/';
+
 export default defineConfig({
+  base,
   // Only pure logic in src/lib is unit-tested (§5); no DOM environment needed.
   test: {
     environment: 'node',
@@ -36,7 +43,8 @@ export default defineConfig({
         description: 'Paranla aranı düzelt.',
         lang: 'tr',
         display: 'standalone',
-        start_url: '/',
+        start_url: base,
+        scope: base,
         // theme_color must match --paper (light); the dark variant is handled
         // by the <meta name="theme-color" media=...> tags in index.html.
         theme_color: '#FAF9F4',
