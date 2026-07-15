@@ -7,10 +7,14 @@ import { todayISO } from '../../lib/dates';
 import { getSettings } from '../../db/repo/settings';
 import { listReviewItems } from '../../db/repo/transactions';
 import { ReviewFlow } from './ReviewFlow';
+import type { Transaction } from '../../db/types';
 
 /** Dashboard badge (§9.8): shows while the review window has open items. */
 export function ReviewBadgeCard() {
-  const [open, setOpen] = useState(false);
+  // The flow gets a FROZEN snapshot: answering removes items from the live
+  // query, which would otherwise shift the stepper and unmount the flow
+  // before its summary screen (P5/P6 review fix).
+  const [flowItems, setFlowItems] = useState<Transaction[] | null>(null);
 
   const items = useLiveQuery(async () => {
     const settings = await getSettings();
@@ -18,21 +22,27 @@ export function ReviewBadgeCard() {
     return listReviewItems(reviewWindow(todayISO(), settings.reviewDay));
   });
 
-  if (!items?.length) return null;
+  if (!items?.length && !flowItems) return null;
 
   return (
-    <section className="rounded-card border border-grid bg-card p-4">
-      <p className="text-base text-ink">
-        {ti(tr.review.badge, { count: String(items.length) })}
-      </p>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="mt-3 min-h-11 w-full rounded-full bg-ballpoint text-base font-medium text-white"
-      >
-        {tr.review.open}
-      </button>
-      {open && <ReviewFlow items={items} onClose={() => setOpen(false)} />}
-    </section>
+    <>
+      {items && items.length > 0 && (
+        <section className="rounded-card border border-grid bg-card p-4">
+          <p className="text-base text-ink">
+            {ti(tr.review.badge, { count: String(items.length) })}
+          </p>
+          <button
+            type="button"
+            onClick={() => setFlowItems(items)}
+            className="mt-3 min-h-11 w-full rounded-full bg-ballpoint text-base font-medium text-white"
+          >
+            {tr.review.open}
+          </button>
+        </section>
+      )}
+      {flowItems && (
+        <ReviewFlow items={flowItems} onClose={() => setFlowItems(null)} />
+      )}
+    </>
   );
 }

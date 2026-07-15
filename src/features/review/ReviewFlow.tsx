@@ -32,6 +32,9 @@ export function ReviewFlow(props: { items: Transaction[]; onClose: () => void })
   const [index, setIndex] = useState(0);
   const [results, setResults] = useState<ReviewedItem[]>([]);
   const [thanks, setThanks] = useState(false);
+  // Display tags live here: props.items is a frozen snapshot, and mutating
+  // it wouldn't re-render anyway.
+  const [tags, setTags] = useState<Record<string, Necessity>>({});
 
   const categories = useLiveQuery(listAllCategories);
   const categoryById = useMemo(
@@ -40,10 +43,11 @@ export function ReviewFlow(props: { items: Transaction[]; onClose: () => void })
   );
 
   const item = props.items[index];
+  const currentTag = item ? (tags[item.id] ?? item.necessity) : undefined;
   const finished = index >= props.items.length;
 
   async function reclassify(next: Necessity) {
-    if (!item || next === item.necessity) return;
+    if (!item || next === currentTag) return;
     await reviewTransaction(item.id, { necessity: next });
     if (next === 'gerekli') {
       // §9.8: gerekli items aren't regret-reviewed — thank & move on.
@@ -55,12 +59,11 @@ export function ReviewFlow(props: { items: Transaction[]; onClose: () => void })
       }, 900);
     } else {
       // keep the card, remember the reclassification for the summary
-      item.necessity = next;
+      setTags((t) => ({ ...t, [item.id]: next }));
       setResults((r) => [
         ...r.filter((x) => x.txn.id !== item.id),
         { txn: item, reclassifiedTo: next },
       ]);
-      setIndex((i) => i); // re-render
     }
   }
 
@@ -134,9 +137,9 @@ export function ReviewFlow(props: { items: Transaction[]; onClose: () => void })
                       key={n}
                       type="button"
                       onClick={() => void reclassify(n)}
-                      aria-pressed={item.necessity === n}
+                      aria-pressed={currentTag === n}
                       className={`min-h-10 rounded-full border px-4 text-xs font-medium ${
-                        item.necessity === n
+                        currentTag === n
                           ? NECESSITY_STYLE[n]
                           : 'border-grid text-ink-soft'
                       }`}
