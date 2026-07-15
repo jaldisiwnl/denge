@@ -121,9 +121,10 @@ export interface QuickTemplate {
   usageCount: number;
 }
 
-// Frozen stats snapshot embedded in MonthlyClose; fully defined with
-// lib/stats.ts in P6. Kept open-shaped until then.
-export type MonthStatsSnapshot = Record<string, unknown>;
+// Frozen stats snapshot embedded in MonthlyClose — defined in lib/stats.ts
+// per §7 ("define in lib/stats.ts").
+export type { MonthStatsSnapshot } from '../lib/stats';
+import type { MonthStatsSnapshot } from '../lib/stats';
 
 export interface MonthlyClose {
   id: UUID;
