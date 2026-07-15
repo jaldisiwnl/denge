@@ -41,6 +41,22 @@
   }
 }
 
+/* Sheets slide up 240ms (§11.6); killed globally by reduced-motion below. */
+@keyframes sheet-up {
+  from {
+    transform: translateY(32px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.animate-sheet-up {
+  animation: sheet-up 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
