@@ -1,6 +1,6 @@
 import { db } from '../db';
 import { stripUndefined } from '../util';
-import type { Mood, Necessity, Transaction } from '../types';
+import type { Mood, Necessity, Regret, Transaction } from '../types';
 import type { ISODate, Minor, MonthKey, UUID } from '../../lib/types';
 import { getMonthRange } from '../../lib/fiscal';
 
@@ -39,12 +39,13 @@ export interface TransactionPatch {
   merchant?: string;
   necessity?: Necessity;
   mood?: Mood;
+  regret?: Regret; // detail-edit answer (§7: "or transaction detail")
 }
 
 /**
  * Edits outside the review flow: a necessity change marks the revision and
  * clears any prior regret answer (§9.2) — the question must be re-asked.
- * (The review flow itself will use a dedicated path in P5.)
+ * A regret given in the same edit is a fresh answer and wins afterwards.
  */
 export async function updateTransaction(
   id: UUID,
@@ -52,13 +53,64 @@ export async function updateTransaction(
 ): Promise<void> {
   const existing = await db.transactions.get(id);
   if (!existing) return;
-  const next: Transaction = { ...existing, ...patch };
+  const { regret, ...fields } = patch;
+  const next: Transaction = { ...existing, ...fields };
   if (patch.necessity && patch.necessity !== existing.necessity) {
     next.necessityRevisedAt = new Date().toISOString();
     delete next.regret;
     delete next.reviewedAt;
   }
+  if (regret && next.necessity !== 'gerekli') {
+    next.regret = regret;
+    next.reviewedAt = new Date().toISOString();
+  }
   await db.transactions.put(stripUndefined(next));
+}
+
+/**
+ * The Pazar Muhasebesi path (§9.8): reclassifying here does NOT clear a
+ * regret answered in the same flow — except reclassify-to-gerekli, which
+ * clears regret and retires the item from review entirely (§17).
+ */
+export async function reviewTransaction(
+  id: UUID,
+  patch: { necessity?: Necessity; regret?: Regret },
+): Promise<void> {
+  const existing = await db.transactions.get(id);
+  if (!existing) return;
+  const next: Transaction = { ...existing };
+  if (patch.necessity && patch.necessity !== existing.necessity) {
+    next.necessity = patch.necessity;
+    next.necessityRevisedAt = new Date().toISOString();
+    if (patch.necessity === 'gerekli') {
+      delete next.regret;
+      delete next.reviewedAt;
+    }
+  }
+  if (patch.regret && next.necessity !== 'gerekli') {
+    next.regret = patch.regret;
+    next.reviewedAt = new Date().toISOString();
+  }
+  await db.transactions.put(stripUndefined(next));
+}
+
+/** Unreviewed istek/boş expenses inside the review window (§9.8). */
+export async function listReviewItems(window: {
+  start: ISODate;
+  end: ISODate;
+}): Promise<Transaction[]> {
+  const txns = await db.transactions
+    .where('date')
+    .between(window.start, window.end, true, true)
+    .toArray();
+  return txns
+    .filter(
+      (t) =>
+        t.type === 'expense' &&
+        (t.necessity === 'istek' || t.necessity === 'bos') &&
+        !t.reviewedAt,
+    )
+    .sort((a, b) => a.date.localeCompare(b.date) || a.createdAt.localeCompare(b.createdAt));
 }
 
 export async function deleteTransaction(id: UUID): Promise<void> {
