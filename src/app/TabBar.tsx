@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { tr } from '../i18n/tr';
+import { useEphemeralStore } from './ui';
 
 // Minimal inline icons — the closed dependency list (§5) has no icon library,
 // and four simple ledger-flavored glyphs don't justify one.
@@ -62,6 +63,7 @@ function Tab({ to, label, icon: Icon }: (typeof tabs)[number]) {
 }
 
 export function TabBar() {
+  const openQuickAdd = useEphemeralStore((s) => s.openQuickAdd);
   return (
     <nav
       aria-label={tr.app.name}
@@ -70,11 +72,12 @@ export function TabBar() {
       <div className="flex items-stretch px-2 py-1">
         <Tab {...tabs[0]!} />
         <Tab {...tabs[1]!} />
-        {/* Center slot: FAB placeholder (§9.1 quick-add arrives in P2) */}
+        {/* Center slot: FAB opens the quick-add sheet (§9.1) */}
         <div className="relative flex-1">
           <button
             type="button"
             aria-label={tr.common.addTransaction}
+            onClick={openQuickAdd}
             className="absolute -top-7 left-1/2 h-14 w-14 -translate-x-1/2 rounded-full bg-ballpoint text-card shadow-overlay"
           >
             <svg viewBox="0 0 24 24" className="mx-auto h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden>

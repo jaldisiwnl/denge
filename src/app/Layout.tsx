@@ -1,11 +1,17 @@
 import { Outlet } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { TabBar } from './TabBar';
+import { Toast } from '../components/Toast';
 import { getSettings } from '../db/repo/settings';
 import { OnboardingScreen } from '../features/onboarding/OnboardingScreen';
+import { QuickAddSheet } from '../features/transactions/QuickAddSheet';
+import { useEphemeralStore } from './ui';
 
 export function Layout() {
   const settings = useLiveQuery(getSettings);
+  const quickAddOpen = useEphemeralStore((s) => s.quickAddOpen);
+  // Keying by the edited id remounts the sheet with fresh state per session.
+  const editingId = useEphemeralStore((s) => s.editTransaction?.id);
 
   // undefined = query still resolving (a few ms on first paint); rendering
   // nothing avoids a tab-bar flash before onboarding takes over.
@@ -19,6 +25,8 @@ export function Layout() {
         <Outlet />
       </main>
       <TabBar />
+      {quickAddOpen && <QuickAddSheet key={editingId ?? 'new'} />}
+      <Toast />
     </div>
   );
 }
