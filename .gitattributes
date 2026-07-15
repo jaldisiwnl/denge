@@ -1,0 +1,3 @@
+# Normalize to LF in repo and working tree (source files are written with LF).
+* text=auto eol=lf
+*.png binary
