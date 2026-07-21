@@ -8,6 +8,7 @@ import { TrendCard } from './TrendCard';
 import { HeatmapCard } from './HeatmapCard';
 import { KumbaraCard } from './KumbaraCard';
 import { PendingRecurringCards } from './PendingRecurringCards';
+import { UpcomingPaymentsCard } from './UpcomingPaymentsCard';
 import { LapseCard } from '../recovery/LapseCard';
 import { ReviewBadgeCard } from '../review/ReviewBadgeCard';
 import { CooldownBadgeCard } from '../cooldown/CooldownBadgeCard';
@@ -40,6 +41,7 @@ export function DashboardScreen() {
         <ReviewBadgeCard className={WIDE} />
         <CooldownBadgeCard className={WIDE} />
         <PendingRecurringCards className={WIDE} />
+        <UpcomingPaymentsCard className={WIDE} />
         <CloseCard className={WIDE} />
         <WeeklyCard />
         <KumbaraCard />

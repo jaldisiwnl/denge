@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { tr } from '../../i18n/tr';
 import { EnvelopesSegment } from './EnvelopesSegment';
-import { RecurringSegment } from '../recurring/RecurringSegment';
+import { PaymentsSegment } from '../payments/PaymentsSegment';
 import { KumbaraSegment } from '../kumbara/KumbaraSegment';
 
-type Segment = 'zarflar' | 'sabitler' | 'kumbara';
+type Segment = 'zarflar' | 'odemeler' | 'kumbara';
 
 // /butce segments (§10): Zarflar | Sabitler | Kumbara.
 export function BudgetsScreen() {
@@ -21,7 +21,7 @@ export function BudgetsScreen() {
         {(
           [
             ['zarflar', tr.budgets.envelopes],
-            ['sabitler', tr.budgets.recurring],
+            ['odemeler', tr.payments.segment],
             ['kumbara', tr.kumbara.title],
           ] as const
         ).map(([key, label]) => (
@@ -42,7 +42,7 @@ export function BudgetsScreen() {
       </div>
 
       {segment === 'zarflar' && <EnvelopesSegment />}
-      {segment === 'sabitler' && <RecurringSegment />}
+      {segment === 'odemeler' && <PaymentsSegment />}
       {segment === 'kumbara' && <KumbaraSegment />}
     </div>
   );

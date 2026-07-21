@@ -42,6 +42,7 @@ export async function clearDemoData(): Promise<void> {
     db.savingsEntries,
     db.quickTemplates,
     db.monthlyCloses,
+    db.obligations,
   ];
   await db.transaction('rw', tables, async () => {
     // Demo rules keep auto-posting while loaded; those rows get real uuids
@@ -232,6 +233,45 @@ export async function loadDemoData(): Promise<void> {
       await db.budgets.add({ id: `${P}budget-${categoryId}`, categoryId, amountMinor, rollover: false });
     }
   }
+
+  // ---- ödemeler (v1.3): a credit card, a person debt, a planned payment
+  const nextMonth = shiftMonthKey(getMonthKey(today, startDay), 1);
+  await db.obligations.bulkAdd([
+    {
+      id: `${P}ob-kart`,
+      kind: 'kart',
+      title: 'Kredi kartı',
+      amountMinor: 120000,
+      categoryId: ids.ev,
+      dayOfMonth: 10,
+      autoPost: false,
+      isActive: true,
+      createdAt: `${addDaysISO(today, -60)}T10:00:00+03:00`,
+      lastPostedDate: addDaysISO(today, -1),
+    },
+    {
+      id: `${P}ob-borc`,
+      kind: 'borc',
+      title: 'Arkadaşa borç',
+      amountMinor: 50000,
+      dayOfMonth: 20,
+      remainingMinor: 200000,
+      autoPost: false,
+      isActive: true,
+      createdAt: `${addDaysISO(today, -40)}T10:00:00+03:00`,
+      lastPostedDate: addDaysISO(today, -1),
+    },
+    {
+      id: `${P}ob-planli`,
+      kind: 'planli',
+      title: 'Anne doğum günü hediyesi',
+      amountMinor: 75000,
+      dueDate: `${nextMonth}-05`,
+      autoPost: false,
+      isActive: true,
+      createdAt: `${addDaysISO(today, -10)}T10:00:00+03:00`,
+    },
+  ]);
 
   // ---- kısayollar (§18)
   await db.quickTemplates.bulkAdd([

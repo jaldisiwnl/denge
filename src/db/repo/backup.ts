@@ -19,6 +19,7 @@ const STORES = [
   'monthlyCloses',
   'settings',
   'uiFlags',
+  'obligations',
 ] as const;
 
 type StoreName = (typeof STORES)[number];
@@ -32,12 +33,13 @@ const TIMESTAMP_FIELD: Partial<Record<StoreName, string>> = {
   monthlyCloses: 'closedAt',
 };
 
-/** v1 backups predate the savings/templates model (§14 schemaVersion 2). */
+/** Stores absent from older backups (schemaVersion 1); filled empty on import. */
 const V1_MISSING: StoreName[] = [
   'savingsGoals',
   'savingsEntries',
   'quickTemplates',
   'uiFlags',
+  'obligations',
 ];
 
 interface BackupRecord {
