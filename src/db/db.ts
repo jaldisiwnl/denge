@@ -4,6 +4,7 @@ import type {
   BudgetOverride,
   Category,
   MonthlyClose,
+  Obligation,
   QuickTemplate,
   RecurringRule,
   SavingsEntry,
@@ -35,6 +36,7 @@ class DengeDb extends Dexie {
   monthlyCloses!: Table<MonthlyClose, string>;
   settings!: Table<Settings, string>;
   uiFlags!: Table<UiFlag, string>;
+  obligations!: Table<Obligation, string>;
 
   constructor() {
     super('denge');
@@ -65,6 +67,12 @@ class DengeDb extends Dexie {
     // marks and dismissed-gap keys. Not part of the §7 data model on purpose.
     this.version(3).stores({
       uiFlags: 'key',
+    });
+
+    // v4 (v1.3): obligations — credit cards, debts, one-off planned payments.
+    // The Ödemeler screen merges these with recurringRules into one calendar.
+    this.version(4).stores({
+      obligations: 'id, kind, dueDate',
     });
 
     // Runs exactly once, inside the DB-creation transaction — the seed can

@@ -6,6 +6,7 @@ import { SideNav } from './SideNav';
 import { Toast } from '../components/Toast';
 import { getSettings } from '../db/repo/settings';
 import { postDueRecurring } from '../db/repo/recurring';
+import { postDueObligations } from '../db/repo/obligations';
 import { todayISO } from '../lib/dates';
 import { OnboardingScreen } from '../features/onboarding/OnboardingScreen';
 import { QuickAddSheet } from '../features/transactions/QuickAddSheet';
@@ -21,7 +22,10 @@ export function Layout() {
   // On app open and window focus (§6): post due recurring transactions.
   // Idempotent by design (§8.7), so firing often is harmless.
   useEffect(() => {
-    const run = () => void postDueRecurring(todayISO());
+    const run = () => {
+      void postDueRecurring(todayISO());
+      void postDueObligations(todayISO()); // auto-post 'kart' obligations
+    };
     run();
     const onVisible = () => {
       if (document.visibilityState === 'visible') run();

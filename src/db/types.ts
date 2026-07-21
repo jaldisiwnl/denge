@@ -137,6 +137,28 @@ export interface MonthlyClose {
   nextMonthWasteLimitMinor?: Minor; // optional self-set challenge
 }
 
+// Ödemeler (v1.3): credit cards, debts owed, one-off planned payments.
+// Merged with recurringRules into the Ödemeler calendar. Not in the original
+// §7 model — an owner-requested extension after a week of real use.
+export type ObligationKind = 'kart' | 'borc' | 'planli';
+
+export interface Obligation {
+  id: UUID;
+  kind: ObligationKind;
+  title: string; // "Kredi kartı", "Ahmet'e borç", "Anne doğum günü"
+  amountMinor: Minor; // monthly payment (kart/borç) or one-off amount (planli)
+  categoryId?: UUID; // expense category when paid
+  dayOfMonth?: number; // kart / recurring borç due day (clamped, §17)
+  dueDate?: ISODate; // planli one-off date
+  remainingMinor?: Minor; // borç: remaining balance, counts down to 0
+  autoPost: boolean; // kart: post automatically on due day; else confirm
+  isActive: boolean; // false when a debt is paid off / planli is done
+  note?: string;
+  createdAt: ISODateTime;
+  lastPostedDate?: ISODate; // kart/recurring borç idempotency (confirm advances)
+  paidAt?: ISODateTime; // planli: when marked paid
+}
+
 export interface Settings {
   id: 'singleton';
   theme: 'light' | 'dark' | 'system';
