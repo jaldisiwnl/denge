@@ -268,3 +268,17 @@ Sahibin talebiyle spec sonrası kapsam:
 - **"Bu hafta" kartı:** Pzt→bugün harcanan + gelen (harçlık buraya düşer), gerekli/istek/boş şeridi, geçen haftanın aynı dönemiyle %kıyas, günlük ortalama.
 - **Maaş çerçevesi kaldırıldı:** "Maaş günü" → "Bütçe ayının başlangıç günü" (düzensiz gelir için 1 önerilir), "Aylık net gelir" → "Aylık ortalama gelir (isteğe bağlı)"; onboarding metinleri düzensiz gelire göre; varsayılan gelir kategorisi Harçlık 💵 (mevcut veritabanında Ayarlar → Kategoriler'den yeniden adlandırılabilir). Demo artık haftalık düzensiz harçlığı otomatik-olmayan haftalık kuralla modelliyor (her hafta "Onayla | Atla" kartı) ve öğrenci ölçekli tutarlarla üretiliyor.
 - Mali ay altyapısı (zarflar/karne/kapanış) aynen duruyor — yalnız maaş varsayımı gitti.
+
+---
+
+## v1.3 — Ödemeler Takvimi (2026-07-15)
+Bir haftalık kullanım geri bildiriminin 1+2+5. maddeleri (tek özellik olarak):
+- **Bütçe → "Sabitler" artık "Ödemeler".** Üstte **takvim/önizleme:** "Bu ay / Gelecek ay" toggle'ı, "Toplam çıkış: ₺X" ve **gün gün ne çıkıyor** listesi (abonelik + sabit + kredi kartı + borç + planlı — hepsi tek yerde, tarih sıralı). Altında: Abonelikler & sabitler (mevcut motor, dokunulmadı), **Borçlar** (kredi kartı + kişiye borç, kalan bakiye + "≈ N ödeme kaldı"), **Planlı ödemeler** (tek seferlik önemli gün/ödeme).
+- **Yeni `Obligation` modeli (Dexie v4):** `kart` (aylık, gün, tutar), `borc` (aylık taksit + kalan bakiye, sıfırlanınca biter), `planli` (tek tarih). Yalnız yeni store eklendiği için mevcut veriler korunuyor (ek migration gerekmez).
+- **Ödeme akışı = onaylı:** kredi kartı/borç/planlı, tutar ve tarih değişebildiği için "Ödedim" ile işlenir (borçta ödenen tutar düzenlenebilir, kalan düşer). Sabit tutarlı kredi kartı istersen "Otomatik yaz" ile açılışta kendiliğinden yazılabilir (abonelikler gibi).
+- **Özet'e "Yaklaşan ödemeler" kartı:** önümüzdeki ~7 gün (geçmiş vadeler de dahil — kaçmasın) içindeki ödemeler, "bugün / 3 gün içinde / gecikti" etiketiyle ve tek dokunuş "Ödedim".
+- **Madde 1 doğrulaması:** abonelikler zaten belirlenen günde otomatik gider yazıyordu (Otomatik yaz açıksa); eksik olan ileriye dönük görünürlüktü — takvim onu çözdü.
+- Yedekleme (export/import + v1 göçü) ve demo verisi obligations'ı kapsıyor (demo: kredi kartı, arkadaşa borç, anne doğum günü hediyesi).
+- 94 test yeşil (payments 10 yeni), build temiz.
+
+**Sırada:** madde 3 (Soğuma "harcamadığın paranın kıymeti" iyileştirmesi), sonra madde 4 (Supabase ile gerçek hesap + cihazlar arası senkron).
