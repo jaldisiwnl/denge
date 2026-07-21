@@ -87,6 +87,7 @@ export function CooldownSegment() {
               amount: formatMinor(data.counters.inKumbaraMinor),
             })}
           </p>
+          <p className="mt-1 text-xs text-ink-soft">{tr.forgone.celebrate}</p>
         </section>
       )}
 

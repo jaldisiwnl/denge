@@ -21,6 +21,7 @@ import { durtuBand } from '../../lib/stats';
 import { getSettings } from '../../db/repo/settings';
 import { listAllCategories } from '../../db/repo/categories';
 import { listCloses } from '../../db/repo/close';
+import { getForgoneTrend } from '../../db/repo/wishlist';
 import {
   getBosTrend,
   getDurtuSeries,
@@ -54,7 +55,7 @@ export function InsightsScreen() {
   );
 
   const data = useLiveQuery(async () => {
-    const [durtu, savings, bosTrend, honesty, mood, weekday, champions, merchants, deltas, closes] =
+    const [durtu, savings, bosTrend, honesty, mood, weekday, champions, merchants, deltas, closes, forgone] =
       await Promise.all([
         getDurtuSeries(monthKey, startDay, 6),
         getSavingsLine(monthKey, startDay, 12),
@@ -66,8 +67,9 @@ export function InsightsScreen() {
         getTopMerchants(monthKey, startDay),
         getMonthDeltas(monthKey, startDay),
         listCloses(),
+        getForgoneTrend(monthKey, startDay, 6),
       ]);
-    return { durtu, savings, bosTrend, honesty, mood, weekday, champions, merchants, deltas, closes };
+    return { durtu, savings, bosTrend, honesty, mood, weekday, champions, merchants, deltas, closes, forgone };
   }, [monthKey, startDay]);
 
   if (!data) return null;
@@ -83,6 +85,7 @@ export function InsightsScreen() {
     data.merchants.length > 0 ||
     data.deltas.length > 0 ||
     data.bosTrend.some((m) => m.bosRate !== null && m.bosRate > 0) ||
+    data.forgone.some((m) => m.minor > 0) ||
     data.closes.length > 0;
 
   return (
@@ -185,6 +188,40 @@ export function InsightsScreen() {
             </ResponsiveContainer>
           </div>
           <p className="mt-2 text-xs text-ink-soft">{tr.insights.inflationNote}</p>
+        </section>
+      )}
+
+      {/* Vazgeçme geçmişi (v1.4) — money resisted per month, a tracked win */}
+      {data.forgone.some((m) => m.minor > 0) && (
+        <section
+          className="rounded-card border border-grid bg-card p-4 lg:mb-4 lg:break-inside-avoid"
+          aria-label={tr.forgone.trendTitle}
+        >
+          <h2 className="text-xs font-medium uppercase tracking-wide text-ink-soft">
+            💪 {tr.forgone.trendTitle}
+          </h2>
+          <div className="mt-2 h-28">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={data.forgone.map((m) => ({
+                  name: label(m.monthKey),
+                  value: m.minor / 100,
+                }))}
+                margin={{ top: 4, right: 0, left: 0, bottom: 0 }}
+              >
+                <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                <Bar dataKey="value" fill="var(--green)" radius={[3, 3, 0, 0]} isAnimationActive={false} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="mt-2 text-xs text-ink-soft">{tr.forgone.trendHint}</p>
+          <ul className="sr-only">
+            {data.forgone.map((m) => (
+              <li key={m.monthKey}>
+                {label(m.monthKey, 'LLLL yyyy')}: {formatMinor(m.minor)}
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 

@@ -156,6 +156,17 @@ export const tr = {
     invalidAmount: 'Tutar geçersiz.',
     on: '{day}. gün',
   },
+  forgone: {
+    title: 'Vazgeçtiklerin',
+    thisMonthLabel: 'Bu ay vazgeçerek harcamadın',
+    allTimeLabel: 'Bugüne dek harcamadığın',
+    supportAllTime: 'Toplam {amount}',
+    inKumbara: "{amount}'si kumbarada",
+    count: '{n} kez direndin',
+    celebrate: 'Harcamadığın paranın da kıymeti var — tıpkı harcadığın kadar.',
+    trendTitle: 'Vazgeçme geçmişi',
+    trendHint: 'Her ay vazgeçerek harcamadığın para.',
+  },
   moods: {
     normal: '😐 Normal',
     stresli: '😖 Stresli',

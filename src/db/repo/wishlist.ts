@@ -1,7 +1,8 @@
 import { db } from '../db';
 import { stripUndefined } from '../util';
 import type { WishlistItem } from '../types';
-import type { Minor, UUID } from '../../lib/types';
+import type { Minor, MonthKey, UUID } from '../../lib/types';
+import { getMonthKey, getMonthRange, shiftMonthKey } from '../../lib/fiscal';
 
 export function listWishlist(): Promise<WishlistItem[]> {
   return db.wishlist.toArray();
@@ -83,4 +84,67 @@ export async function getCooldownCounters(): Promise<CooldownCounters> {
       .filter((e) => e.source === 'vazgecme')
       .reduce((s, e) => s + e.amountMinor, 0),
   };
+}
+
+// "Harcamadığın paranın kıymeti" (v1.4): money resisted via cooldown vazgeç
+// is a win in itself — surfaced on the dashboard and tracked over time.
+
+export interface ForgoneStats {
+  thisMonthMinor: Minor;
+  thisMonthCount: number;
+  allTimeMinor: Minor;
+  allTimeCount: number;
+  inKumbaraMinor: Minor;
+}
+
+/** Forgone (vazgeçildi) totals for the fiscal month + all time. */
+export async function getForgoneStats(
+  monthKey: MonthKey,
+  startDay: number,
+): Promise<ForgoneStats> {
+  const [items, entries] = await Promise.all([
+    db.wishlist.toArray(),
+    db.savingsEntries.toArray(),
+  ]);
+  const forgone = items.filter(
+    (i) => i.status === 'vazgecildi' && i.estimatedAmountMinor,
+  );
+  const { start, end } = getMonthRange(monthKey, startDay);
+  // Bucket by the fiscal month the decision was made in (decidedAt's date).
+  const thisMonth = forgone.filter((i) => {
+    const d = (i.decidedAt ?? '').slice(0, 10);
+    return d >= start && d <= end;
+  });
+  return {
+    thisMonthMinor: thisMonth.reduce((s, i) => s + (i.estimatedAmountMinor ?? 0), 0),
+    thisMonthCount: thisMonth.length,
+    allTimeMinor: forgone.reduce((s, i) => s + (i.estimatedAmountMinor ?? 0), 0),
+    allTimeCount: forgone.length,
+    inKumbaraMinor: entries
+      .filter((e) => e.source === 'vazgecme')
+      .reduce((s, e) => s + e.amountMinor, 0),
+  };
+}
+
+/** Forgone amount per fiscal month, oldest first (İçgörü trend). */
+export async function getForgoneTrend(
+  currentKey: MonthKey,
+  startDay: number,
+  months: number,
+): Promise<{ monthKey: MonthKey; minor: Minor }[]> {
+  const items = await db.wishlist.toArray();
+  const forgone = items.filter(
+    (i) => i.status === 'vazgecildi' && i.estimatedAmountMinor && i.decidedAt,
+  );
+  const buckets = new Map<MonthKey, Minor>();
+  for (const i of forgone) {
+    const key = getMonthKey(i.decidedAt!.slice(0, 10), startDay);
+    buckets.set(key, (buckets.get(key) ?? 0) + (i.estimatedAmountMinor ?? 0));
+  }
+  const result: { monthKey: MonthKey; minor: Minor }[] = [];
+  for (let back = months - 1; back >= 0; back--) {
+    const monthKey = shiftMonthKey(currentKey, -back);
+    result.push({ monthKey, minor: buckets.get(monthKey) ?? 0 });
+  }
+  return result;
 }

@@ -7,6 +7,7 @@ import { DonutCard } from './DonutCard';
 import { TrendCard } from './TrendCard';
 import { HeatmapCard } from './HeatmapCard';
 import { KumbaraCard } from './KumbaraCard';
+import { ForgoneCard } from './ForgoneCard';
 import { PendingRecurringCards } from './PendingRecurringCards';
 import { UpcomingPaymentsCard } from './UpcomingPaymentsCard';
 import { LapseCard } from '../recovery/LapseCard';
@@ -45,6 +46,7 @@ export function DashboardScreen() {
         <CloseCard className={WIDE} />
         <WeeklyCard />
         <KumbaraCard />
+        <ForgoneCard />
         <StreakCard />
         <DonutCard />
         <TrendCard />
